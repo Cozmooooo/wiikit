@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { library, usbDrive, sdDrive, installing, log, step, wiilinkConfirmed } from '../stores/state'
+  import { library, usbDrive, sdDrive, installing, log, step, wiilinkConfirmed, consoleType } from '../stores/state'
 
   let done = false
   let errorMsg = ''
@@ -31,7 +31,7 @@
     })
 
     try {
-      await window.go.main.App.StartInstall(selectedGames, usb, sd)
+      await window.go.main.App.StartInstall(selectedGames, usb, sd, $consoleType)
     } catch (e: unknown) {
       errorMsg = e instanceof Error ? e.message : String(e)
       installing.set(false)
@@ -41,7 +41,7 @@
   function back() { step.set(2) }
 
   function restart() {
-    step.set(1)
+    step.set(0)
     library.set([])
     usbDrive.set(null)
     sdDrive.set(null)
@@ -71,20 +71,34 @@
       </div>
     </div>
 
-    <div class="wiilink-disclosure">
-      <strong>WiiLink Online Services</strong>
-      <p>
-        WiiKit will download and launch the <strong>WiiLink Patcher GUI</strong> (verified SHA-256).
-        It's an interactive app — a window will open and you'll point it at your SD card path.
-        The patcher connects to <code>wiilink24.com</code> to restore Nintendo's discontinued
-        online channels (Wii Room, Food Channel, etc.).
-        Your Wii will phone home to WiiLink servers after setup.
-      </p>
-      <label class="confirm-row">
-        <input type="checkbox" bind:checked={wiilinkOk} />
-        I'll complete the WiiLink Patcher window when it opens
-      </label>
-    </div>
+    {#if $consoleType === 'wii'}
+      <div class="wiilink-disclosure">
+        <strong>WiiLink Online Services</strong>
+        <p>
+          WiiKit will download and launch the <strong>WiiLink Patcher GUI</strong> (verified SHA-256).
+          It's an interactive app — a window will open and you'll point it at your SD card path.
+          The patcher connects to <code>wiilink24.com</code> to restore Nintendo's discontinued
+          online channels (Wii Room, Food Channel, etc.).
+          Your Wii will phone home to WiiLink servers after setup.
+        </p>
+        <label class="confirm-row">
+          <input type="checkbox" bind:checked={wiilinkOk} />
+          I'll complete the WiiLink Patcher window when it opens
+        </label>
+      </div>
+    {:else if $consoleType === 'wiiu'}
+      <div class="console-note wiiu">
+        <strong>Wii U (vWii mode)</strong>
+        <p>WiiLink is not supported on vWii. All other homebrew will install normally.</p>
+        <p>Requires <strong>Tiramisu or Aroma CFW</strong> already installed on your Wii U before proceeding.</p>
+      </div>
+    {:else if $consoleType === 'wiimini'}
+      <div class="console-note mini">
+        <strong>Wii Mini</strong>
+        <p>No WiFi — WiiLink is skipped. Games load from USB only.</p>
+        <p>To install homebrew on a stock Wii Mini, use <strong>BlueBomb</strong> (requires a Bluetooth-capable Linux device nearby). Instructions will appear in the log after setup completes.</p>
+      </div>
+    {/if}
   {/if}
 
   {#if $log.length > 0}
@@ -112,7 +126,7 @@
       <button class="ghost" on:click={back}>← Back</button>
       <button
         class="primary big"
-        disabled={!wiilinkOk || $installing}
+        disabled={($consoleType === 'wii' && !wiilinkOk) || $installing}
         on:click={startInstall}
       >
         {$installing ? 'Installing…' : '🚀 Start Install'}
@@ -132,6 +146,16 @@
   }
   .summary-row { display: flex; justify-content: space-between; font-size: 13px; }
   .summary-row span { color: #888; }
+
+  .console-note {
+    border-radius: 8px; padding: 16px; margin-bottom: 80px;
+  }
+  .console-note.wiiu { background: #0d1a2e; border: 1px solid #1a3a5e; }
+  .console-note.mini { background: #1a0d00; border: 1px solid #3a1a00; }
+  .console-note strong { display: block; margin-bottom: 8px; }
+  .console-note.wiiu strong { color: #7cb8ff; }
+  .console-note.mini strong { color: #f0a000; }
+  .console-note p { color: #aaa; font-size: 13px; line-height: 1.5; margin-bottom: 6px; }
 
   .wiilink-disclosure {
     background: #0d1a2e; border: 1px solid #1a3a5e; border-radius: 8px;

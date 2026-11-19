@@ -24,7 +24,10 @@ export type Progress = {
   stage?: string
 }
 
-export const step = writable<1 | 2 | 3>(1)
+export type ConsoleType = 'wii' | 'wiiu' | 'wiimini'
+
+export const step = writable<0 | 1 | 2 | 3>(0)
+export const consoleType = writable<ConsoleType>('wii')
 export const library = writable<Game[]>([])
 export const drives = writable<DriveInfo[]>([])
 export const usbDrive = writable<DriveInfo | null>(null)

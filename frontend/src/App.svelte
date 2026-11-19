@@ -1,5 +1,6 @@
 <script lang="ts">
   import { step } from './stores/state'
+  import ConsolePanel from './components/ConsolePanel.svelte'
   import LibraryPanel from './components/LibraryPanel.svelte'
   import DrivePanel from './components/DrivePanel.svelte'
   import InstallPanel from './components/InstallPanel.svelte'
@@ -29,6 +30,8 @@
     </nav>
     {#if activeTab === 'wizard'}
       <div class="steps">
+        <span class:active={$step >= 0} class:done={$step > 0}>0 · Console</span>
+        <span class="sep">›</span>
         <span class:active={$step >= 1} class:done={$step > 1}>1 · Library</span>
         <span class="sep">›</span>
         <span class:active={$step >= 2} class:done={$step > 2}>2 · Drives</span>
@@ -43,6 +46,8 @@
   <div class="panel">
     {#if activeTab === 'deals'}
       <DealsPanel />
+    {:else if $step === 0}
+      <ConsolePanel />
     {:else if $step === 1}
       <LibraryPanel />
     {:else if $step === 2}

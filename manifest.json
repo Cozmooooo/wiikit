@@ -58,6 +58,14 @@
       "dest": "sd://apps/Nintendont/"
     },
     {
+      "name": "hackmii-installer",
+      "version": "1.2",
+      "url": "https://bootmii.org/download/hackmii_installer_v1.2.zip",
+      "sha256": "",
+      "dest": "sd://",
+      "_note": "HackMii Installer v1.2 — boot.dol placed at SD root. User runs LetterBomb (MAC-specific, generated at please.hackmii.com) which launches this installer to install HBC + BootMii. SHA256 left empty; will be pinned after first verified download."
+    },
+    {
       "name": "wiilink-patcher-windows",
       "version": "v1.5.3",
       "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-Windows-onefile-x64.exe",

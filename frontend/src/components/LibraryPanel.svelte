@@ -26,6 +26,7 @@
 
   $: selectedCount = $library.filter(g => g.selected).length
 
+  function back() { step.set(0) }
   function next() { step.set(2) }
 
   function fmtSize(bytes: number) {

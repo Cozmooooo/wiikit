@@ -54,7 +54,16 @@ func (a *App) SearchDeals(query string, maxPrice float64, minPrice float64) deal
 	return deals.Search(a.ctx, params)
 }
 
-func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDrive drive.DriveInfo) error {
+// ConsoleType mirrors the frontend store value.
+type ConsoleType string
+
+const (
+	ConsoleWii     ConsoleType = "wii"
+	ConsoleWiiU    ConsoleType = "wiiu"
+	ConsoleWiiMini ConsoleType = "wiimini"
+)
+
+func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDrive drive.DriveInfo, consoleType ConsoleType) error {
 	go func() {
 		progress := make(chan drive.Progress, 32)
 		go func() {
@@ -98,13 +107,32 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 			return
 		}
 
-		emit("Running WiiLink patcher...")
-		if err := wiilink.RunPatcher(a.ctx, sdDrive.Path, nil); err != nil {
-			runtime.EventsEmit(a.ctx, "error", err.Error())
-			return
+		// WiiLink online services — only on base Wii (not supported on vWii or Wii Mini)
+		if consoleType == ConsoleWii {
+			emit("Running WiiLink patcher...")
+			if err := wiilink.RunPatcher(a.ctx, sdDrive.Path, nil); err != nil {
+				runtime.EventsEmit(a.ctx, "error", err.Error())
+				return
+			}
+		} else {
+			emit("Skipping WiiLink (not supported on " + string(consoleType) + ").")
 		}
 
-		emit("Done! Eject your drives and power on the Wii.")
+		switch consoleType {
+		case ConsoleWii:
+			emit("SD ready. LetterBomb exploit: visit please.hackmii.com on another device,")
+			emit("  enter your Wii's MAC address (Settings › Internet › Console Info), download the ZIP,")
+			emit("  copy 'private' folder and 'boot.elf' to the root of this SD card, then follow on-screen steps.")
+		case ConsoleWiiU:
+			emit("Wii U note: install Tiramisu or Aroma CFW first, then access vWii.")
+			emit("  Games load via USBLoader GX in vWii mode. WiiLink is not available on vWii.")
+		case ConsoleWiiMini:
+			emit("Wii Mini note: no WiFi — LetterBomb won't work.")
+			emit("  Use BlueBomb (requires a Bluetooth-capable Linux device nearby).")
+			emit("  See: github.com/Fullmetal5/bluebomb for setup instructions.")
+		}
+
+		emit("Done! Eject your drives and power on the console.")
 		runtime.EventsEmit(a.ctx, "done", nil)
 	}()
 	return nil
