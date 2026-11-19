@@ -1,0 +1,61 @@
+{
+  "version": "1.0.0",
+  "assets": [
+    {
+      "name": "wiiflow",
+      "version": "5.5.4-1",
+      "url": "https://github.com/Fledge68/WiiFlow_Lite/releases/download/v5.5.4-1/WiiFlow_Lite-5.5.4-1.zip",
+      "sha256": "PLACEHOLDER_RUN_sha256sum_ON_DOWNLOAD",
+      "dest": "sd://apps/wiiflow/"
+    },
+    {
+      "name": "usbloadergx",
+      "version": "3.0",
+      "url": "https://github.com/wiidev/usbloadergx/releases/latest/download/USBLoaderGX.dol",
+      "sha256": "PLACEHOLDER_RUN_sha256sum_ON_DOWNLOAD",
+      "dest": "sd://apps/usbloadergx/boot.dol"
+    },
+    {
+      "name": "nintendont",
+      "version": "latest",
+      "url": "https://github.com/FIX94/Nintendont/releases/latest/download/boot.dol",
+      "sha256": "PLACEHOLDER_RUN_sha256sum_ON_DOWNLOAD",
+      "dest": "sd://apps/nintendont/boot.dol"
+    },
+    {
+      "name": "not64",
+      "version": "latest",
+      "url": "https://github.com/Extrems/Not64/releases/latest/download/not64.zip",
+      "sha256": "PLACEHOLDER_RUN_sha256sum_ON_DOWNLOAD",
+      "dest": "sd://apps/not64/"
+    },
+    {
+      "name": "wiistation",
+      "version": "3.2",
+      "url": "https://github.com/xjsxjs197/WiiSXRX_2022/releases/latest/download/WiiStation.zip",
+      "sha256": "PLACEHOLDER_RUN_sha256sum_ON_DOWNLOAD",
+      "dest": "sd://apps/wiistation/"
+    },
+    {
+      "name": "snes9xgx",
+      "version": "latest",
+      "url": "https://github.com/dborth/snes9xgx/releases/latest/download/snes9xgx.zip",
+      "sha256": "PLACEHOLDER_RUN_sha256sum_ON_DOWNLOAD",
+      "dest": "sd://apps/snes9xgx/"
+    },
+    {
+      "name": "fceugx",
+      "version": "latest",
+      "url": "https://github.com/dborth/fceugx/releases/latest/download/fceugx.zip",
+      "sha256": "PLACEHOLDER_RUN_sha256sum_ON_DOWNLOAD",
+      "dest": "sd://apps/fceugx/"
+    },
+    {
+      "name": "vbagx",
+      "version": "latest",
+      "url": "https://github.com/dborth/vbagx/releases/latest/download/vbagx.zip",
+      "sha256": "PLACEHOLDER_RUN_sha256sum_ON_DOWNLOAD",
+      "dest": "sd://apps/vbagx/"
+    }
+  ]
+}
