@@ -74,13 +74,15 @@
     <div class="wiilink-disclosure">
       <strong>WiiLink Online Services</strong>
       <p>
-        The WiiLink patcher will connect to <code>wiilink24.com</code> to restore
-        Nintendo's discontinued online channels (Wii Room, Food Channel, etc.).
-        This is a community service — your Wii will phone home to WiiLink servers after setup.
+        WiiKit will download and launch the <strong>WiiLink Patcher GUI</strong> (verified SHA-256).
+        It's an interactive app — a window will open and you'll point it at your SD card path.
+        The patcher connects to <code>wiilink24.com</code> to restore Nintendo's discontinued
+        online channels (Wii Room, Food Channel, etc.).
+        Your Wii will phone home to WiiLink servers after setup.
       </p>
       <label class="confirm-row">
         <input type="checkbox" bind:checked={wiilinkOk} />
-        I understand WiiLink patcher will connect to wiilink24.com
+        I'll complete the WiiLink Patcher window when it opens
       </label>
     </div>
   {/if}

@@ -49,9 +49,39 @@
       "url": "https://github.com/dborth/vbagx/releases/download/3.0.6/VisualBoyAdvanceGX-3.0.6-Wii.zip",
       "sha256": "3fa544c75545f42e3a9e2bb884330d59e4ba04bab6df6f0ec3f543298223c729",
       "dest": "sd://apps/vbagx/"
+    },
+    {
+      "name": "nintendont",
+      "version": "oscwii-2026",
+      "url": "https://hbb1.oscwii.org/hbb/nintendont/nintendont.zip",
+      "sha256": "2531767f8e69e6b909a275a2204e0e056ee06b2150f5481c19a66ed93fda9f36",
+      "dest": "sd://apps/Nintendont/"
+    },
+    {
+      "name": "wiilink-patcher-windows",
+      "version": "v1.5.3",
+      "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-Windows-onefile-x64.exe",
+      "sha256": "37d685b02f5bb06904043a21d25687401f751d665864ff4537baebe7b1a669bc",
+      "dest": ""
+    },
+    {
+      "name": "wiilink-patcher-macos",
+      "version": "v1.5.3",
+      "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-macOS-arm64.tar.gz",
+      "sha256": "d560a2e0bdef37764da6b957e8d811a73ee6b7bbf2fb237d5d3177ae9546558d",
+      "dest": ""
+    },
+    {
+      "name": "wiilink-patcher-linux",
+      "version": "v1.5.3",
+      "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-Linux-x64.tar.gz",
+      "sha256": "76f8469df7524fc0a1b59f8be39003a4839fc2500f353fcc4de34b45ac3d6cd3",
+      "dest": ""
     }
   ],
   "_notes": {
-    "nintendont": "FIX94/Nintendont has no GitHub releases. Boot.dol must be sourced from a trusted community build or the Homebrew Browser. Add manually with verified sha256 once a trusted source is confirmed."
+    "nintendont": "Sourced from Open Shop Channel (oscwii.org) — the standard Wii homebrew distribution channel. The zip contains apps/Nintendont/boot.dol which is extracted to sd://apps/Nintendont/. SHA-256 verified 2026-11-19.",
+    "wiilink-patcher": "WiiLink Patcher is now a GUI app (WiiLink24/WiiLink-Patcher-GUI v1.5.3). It does NOT support --unattended flags. WiiKit downloads, verifies, and launches it; the user completes the interactive setup. The SD root is pre-populated so they only need to confirm paths in the GUI.",
+    "wiilink-patcher-macos": "arm64 (Apple Silicon). An x64 build also exists at WiiLinkPatcherGUI-macOS-x64.tar.gz if needed for Intel Macs."
   }
 }
