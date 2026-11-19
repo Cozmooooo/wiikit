@@ -2,43 +2,44 @@
   import { library, usbDrive, sdDrive, installing, log, step, wiilinkConfirmed } from '../stores/state'
 
   let done = false
-  let error = ''
+  let errorMsg = ''
+  let wiilinkOk = false
+  $: wiilinkConfirmed.set(wiilinkOk)
 
   async function startInstall() {
-    if (!$usbDrive || !$sdDrive) return
+    const usb = $usbDrive
+    const sd = $sdDrive
+    if (!usb || !sd) return
+
     installing.set(true)
     log.set([])
     done = false
-    error = ''
+    errorMsg = ''
 
     const selectedGames = $library.filter(g => g.selected)
 
-    // Listen for events from Go backend
-    // @ts-ignore
-    window.runtime?.EventsOn('log', (msg: string) => {
-      log.update(l => [...l, msg])
+    window.runtime?.EventsOn('log', (msg: unknown) => {
+      log.update(l => [...l, String(msg)])
     })
-    // @ts-ignore
-    window.runtime?.EventsOn('error', (msg: string) => {
-      error = msg
+    window.runtime?.EventsOn('error', (msg: unknown) => {
+      errorMsg = String(msg)
       installing.set(false)
     })
-    // @ts-ignore
     window.runtime?.EventsOn('done', () => {
       done = true
       installing.set(false)
     })
 
     try {
-      // @ts-ignore
-      await window.go.main.App.StartInstall(selectedGames, $usbDrive, $sdDrive)
-    } catch (e: any) {
-      error = e.message || String(e)
+      await window.go.main.App.StartInstall(selectedGames, usb, sd)
+    } catch (e: unknown) {
+      errorMsg = e instanceof Error ? e.message : String(e)
       installing.set(false)
     }
   }
 
   function back() { step.set(2) }
+
   function restart() {
     step.set(1)
     library.set([])
@@ -46,14 +47,15 @@
     sdDrive.set(null)
     log.set([])
     done = false
-    error = ''
+    errorMsg = ''
+    wiilinkOk = false
   }
 </script>
 
 <div class="install">
   <h2>Install</h2>
 
-  {#if !$installing && !done && !error}
+  {#if !$installing && !done && !errorMsg}
     <div class="summary">
       <div class="summary-row">
         <span>Games</span>
@@ -71,9 +73,13 @@
 
     <div class="wiilink-disclosure">
       <strong>WiiLink Online Services</strong>
-      <p>The WiiLink patcher will connect to <code>wiilink24.com</code> to restore Nintendo's discontinued online channels (Wii Room, Food Channel, etc.). This is an external service run by the WiiLink community.</p>
+      <p>
+        The WiiLink patcher will connect to <code>wiilink24.com</code> to restore
+        Nintendo's discontinued online channels (Wii Room, Food Channel, etc.).
+        This is a community service — your Wii will phone home to WiiLink servers after setup.
+      </p>
       <label class="confirm-row">
-        <input type="checkbox" bind:checked={$wiilinkConfirmed} />
+        <input type="checkbox" bind:checked={wiilinkOk} />
         I understand WiiLink patcher will connect to wiilink24.com
       </label>
     </div>
@@ -87,9 +93,9 @@
     </div>
   {/if}
 
-  {#if error}
+  {#if errorMsg}
     <div class="error-box">
-      <strong>Error:</strong> {error}
+      <strong>Error:</strong> {errorMsg}
     </div>
   {/if}
 
@@ -104,7 +110,7 @@
       <button class="ghost" on:click={back}>← Back</button>
       <button
         class="primary big"
-        disabled={!$wiilinkConfirmed || $installing}
+        disabled={!wiilinkOk || $installing}
         on:click={startInstall}
       >
         {$installing ? 'Installing…' : '🚀 Start Install'}

@@ -1,35 +1,39 @@
 <script lang="ts">
+  import { onMount } from 'svelte'
   import { drives, usbDrive, sdDrive, step, formatConfirmed } from '../stores/state'
   import type { DriveInfo } from '../stores/state'
-  import { onMount } from 'svelte'
 
   let loading = true
+  let selectedUsb: DriveInfo | null = null
+  let selectedSd: DriveInfo | null = null
+  let confirmed = false
+
+  $: usbDrive.set(selectedUsb)
+  $: sdDrive.set(selectedSd)
+  $: formatConfirmed.set(confirmed)
 
   onMount(async () => {
-    // @ts-ignore
-    const list: DriveInfo[] = await window.go.main.App.ListDrives()
-    drives.set(list)
-    loading = false
+    await refreshDrives()
   })
 
   async function refreshDrives() {
     loading = true
-    // @ts-ignore
-    const list: DriveInfo[] = await window.go.main.App.ListDrives()
-    drives.set(list)
+    try {
+      const list: DriveInfo[] = await window.go.main.App.ListDrives()
+      drives.set(list)
+    } catch (e) {
+      drives.set([])
+    }
     loading = false
   }
 
-  function getPreview(d: DriveInfo | null, label: string) {
-    if (!d) return ''
-    // @ts-ignore
-    return window.go?.main?.App?.PreviewFormat(d, label) ?? ''
-  }
-
-  $: usbPreview = $usbDrive ? `Will erase ${$usbDrive.path} (${fmtSize($usbDrive.sizeBytes)}) and format as FAT32 "WIIGAMES". THIS CANNOT BE UNDONE.` : ''
-  $: sdPreview = $sdDrive ? `Will erase ${$sdDrive.path} (${fmtSize($sdDrive.sizeBytes)}) and format as FAT32 "WIISD". THIS CANNOT BE UNDONE.` : ''
-
-  $: canProceed = $usbDrive && $sdDrive && $formatConfirmed && $usbDrive.path !== $sdDrive.path
+  $: usbPreview = selectedUsb
+    ? `Will erase ${selectedUsb.path} (${fmtSize(selectedUsb.sizeBytes)}) and format FAT32 "WIIGAMES". CANNOT BE UNDONE.`
+    : ''
+  $: sdPreview = selectedSd
+    ? `Will erase ${selectedSd.path} (${fmtSize(selectedSd.sizeBytes)}) and format FAT32 "WIISD". CANNOT BE UNDONE.`
+    : ''
+  $: canProceed = selectedUsb && selectedSd && confirmed && selectedUsb.path !== selectedSd.path
 
   function fmtSize(bytes: number) {
     return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB'
@@ -55,8 +59,8 @@
     <div class="empty">No removable drives detected. Plug in your USB and SD card, then refresh.</div>
   {:else}
     <div class="drive-row">
-      <label class="drive-label">USB Drive (games)</label>
-      <select bind:value={$usbDrive}>
+      <label for="usb-select" class="drive-label">USB Drive (games)</label>
+      <select id="usb-select" bind:value={selectedUsb}>
         <option value={null}>— Select USB —</option>
         {#each $drives as d}
           <option value={d}>{d.path} · {d.label || 'Unlabeled'} · {fmtSize(d.sizeBytes)}</option>
@@ -65,8 +69,8 @@
     </div>
 
     <div class="drive-row">
-      <label class="drive-label">SD Card (homebrew)</label>
-      <select bind:value={$sdDrive}>
+      <label for="sd-select" class="drive-label">SD Card (homebrew)</label>
+      <select id="sd-select" bind:value={selectedSd}>
         <option value={null}>— Select SD Card —</option>
         {#each $drives as d}
           <option value={d}>{d.path} · {d.label || 'Unlabeled'} · {fmtSize(d.sizeBytes)}</option>
@@ -74,14 +78,14 @@
       </select>
     </div>
 
-    {#if $usbDrive || $sdDrive}
+    {#if selectedUsb || selectedSd}
       <div class="warning-box">
         {#if usbPreview}<p>{usbPreview}</p>{/if}
         {#if sdPreview}<p>{sdPreview}</p>{/if}
       </div>
 
       <label class="confirm-row">
-        <input type="checkbox" bind:checked={$formatConfirmed} />
+        <input type="checkbox" bind:checked={confirmed} />
         I understand this will permanently erase the selected drives.
       </label>
     {/if}
