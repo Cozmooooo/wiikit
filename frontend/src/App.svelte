@@ -5,8 +5,9 @@
   import DrivePanel from './components/DrivePanel.svelte'
   import InstallPanel from './components/InstallPanel.svelte'
   import DealsPanel from './components/DealsPanel.svelte'
+  import SetupCard from './components/SetupCard.svelte'
 
-  let activeTab: 'wizard' | 'deals' = 'wizard'
+  let activeTab: 'wizard' | 'deals' | 'card' = 'wizard'
 </script>
 
 <main>
@@ -27,8 +28,15 @@
       >
         🔍 Deal Finder
       </button>
+      <button
+        class="nav-tab"
+        class:active={activeTab === 'card'}
+        on:click={() => (activeTab = 'card')}
+      >
+        🃏 Setup Card
+      </button>
     </nav>
-    {#if activeTab === 'wizard'}
+    {#if activeTab === 'wizard' && $step >= 0}
       <div class="steps">
         <span class:active={$step >= 0} class:done={$step > 0}>0 · Console</span>
         <span class="sep">›</span>
@@ -46,6 +54,8 @@
   <div class="panel">
     {#if activeTab === 'deals'}
       <DealsPanel />
+    {:else if activeTab === 'card'}
+      <SetupCard />
     {:else if $step === 0}
       <ConsolePanel />
     {:else if $step === 1}

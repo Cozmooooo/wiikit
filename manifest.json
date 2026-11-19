@@ -58,6 +58,13 @@
       "dest": "sd://apps/Nintendont/"
     },
     {
+      "name": "priiloader",
+      "version": "0.10.0",
+      "url": "https://github.com/DacoTaco/priiloader/releases/download/0.10.0/Priiloader_v0_10_0.zip",
+      "sha256": "",
+      "dest": "sd://apps/priiloader/"
+    },
+    {
       "name": "hackmii-installer",
       "version": "1.2",
       "url": "https://bootmii.org/download/hackmii_installer_v1.2.zip",

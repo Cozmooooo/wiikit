@@ -107,6 +107,14 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 			return
 		}
 
+		// Priiloader auto-boot config (Wii only)
+		if consoleType == ConsoleWii {
+			emit("Writing Priiloader auto-boot config...")
+			if err := homebrew.WritePriiloaderConfig(sdDrive.Path); err != nil {
+				emit("Warning: could not write priiloader.cfg: " + err.Error())
+			}
+		}
+
 		// WiiLink online services — only on base Wii (not supported on vWii or Wii Mini)
 		if consoleType == ConsoleWii {
 			emit("Running WiiLink patcher...")
