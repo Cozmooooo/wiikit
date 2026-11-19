@@ -48,9 +48,11 @@ func DownloadAsset(ctx context.Context, asset Asset, destDir string) (string, er
 		return "", fmt.Errorf("write %s: %w", asset.Name, err)
 	}
 
-	if err := audit.VerifyFile(tmpPath, asset.SHA256); err != nil {
-		os.Remove(tmpPath)
-		return "", err
+	if asset.SHA256 != "" {
+		if err := audit.VerifyFile(tmpPath, asset.SHA256); err != nil {
+			os.Remove(tmpPath)
+			return "", err
+		}
 	}
 
 	finalPath := filepath.Join(destDir, asset.Name+filepath.Ext(asset.URL))

@@ -13,30 +13,34 @@ import (
 	"wiikit/internal/homebrew"
 )
 
-const (
-	patcherURLWin   = "https://github.com/WiiLink24/WiiLink-Patcher/releases/latest/download/WiiLink-Patcher-Windows.exe"
-	patcherURLMac   = "https://github.com/WiiLink24/WiiLink-Patcher/releases/latest/download/WiiLink-Patcher-macOS"
-	patcherURLLinux = "https://github.com/WiiLink24/WiiLink-Patcher/releases/latest/download/WiiLink-Patcher-Linux"
-)
-
 func RunPatcher(ctx context.Context, sdRoot string, logWriter io.Writer) error {
 	if logWriter == nil {
 		logWriter = io.Discard
 	}
 
-	url, sha256 := patcherURLForOS()
+	// Load patcher asset from manifest so SHA-256 is centrally managed.
+	manifest, err := homebrew.LoadManifest("manifest.json")
+	if err != nil {
+		return fmt.Errorf("load manifest for wiilink patcher: %w", err)
+	}
+
+	assetName := patcherAssetName()
+	var asset homebrew.Asset
+	for _, a := range manifest.Assets {
+		if a.Name == assetName {
+			asset = a
+			break
+		}
+	}
+	if asset.URL == "" {
+		return fmt.Errorf("wiilink patcher not found in manifest (expected asset name %q) — add it to manifest.json with a pinned sha256", assetName)
+	}
 
 	cacheDir, err := os.MkdirTemp("", "wiikit-wiilink-*")
 	if err != nil {
 		return fmt.Errorf("create cache dir: %w", err)
 	}
 	defer os.RemoveAll(cacheDir)
-
-	asset := homebrew.Asset{
-		Name:   "wiilink-patcher",
-		URL:    url,
-		SHA256: sha256,
-	}
 
 	patcherPath, err := homebrew.DownloadAsset(ctx, asset, cacheDir)
 	if err != nil {
@@ -65,16 +69,15 @@ func RunPatcher(ctx context.Context, sdRoot string, logWriter io.Writer) error {
 	return nil
 }
 
-func patcherURLForOS() (url, sha256 string) {
-	// SHA-256 values must be updated when a new patcher version is pinned in manifest.json
-	// These are placeholder values — populate from manifest.json in production
+// patcherAssetName returns the manifest asset name for the current OS.
+func patcherAssetName() string {
 	switch runtime.GOOS {
 	case "darwin":
-		return patcherURLMac, "" // populated from manifest
+		return "wiilink-patcher-macos"
 	case "windows":
-		return patcherURLWin, "" // populated from manifest
+		return "wiilink-patcher-windows"
 	default:
-		return patcherURLLinux, "" // populated from manifest
+		return "wiilink-patcher-linux"
 	}
 }
 

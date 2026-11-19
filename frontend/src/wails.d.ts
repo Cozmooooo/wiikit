@@ -13,6 +13,15 @@ declare global {
             usb: import('./stores/state').DriveInfo,
             sd: import('./stores/state').DriveInfo
           ): Promise<void>
+          SearchDeals(query: string, maxPrice: number, minPrice: number): Promise<{
+            listings: Array<{
+              id: string; title: string; price: number; currency: string;
+              condition: string; url: string; imageUrl: string; seller: string;
+              location: string; source: string; score: number;
+            }>;
+            ebayError?: string;
+            facebookError?: string;
+          }>
         }
       }
     }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"wiikit/internal/deals"
 	"wiikit/internal/drive"
 	"wiikit/internal/library"
 	"wiikit/internal/homebrew"
@@ -38,6 +39,19 @@ func (a *App) OpenDirectoryDialog() (string, error) {
 	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "Select Game Library Folder",
 	})
+}
+
+func (a *App) SearchDeals(query string, maxPrice float64, minPrice float64) deals.SearchResult {
+	params := deals.SearchParams{
+		Query:    query,
+		MaxPrice: maxPrice,
+		MinPrice: minPrice,
+		Limit:    25,
+	}
+	if params.Query == "" {
+		params = deals.DefaultWiiParams()
+	}
+	return deals.Search(a.ctx, params)
 }
 
 func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDrive drive.DriveInfo) error {
