@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { drives, usbDrive, sdDrive, step, formatConfirmed } from '../stores/state'
+  import { drives, usbDrive, sdDrive, step, formatConfirmed, library } from '../stores/state'
   import type { DriveInfo } from '../stores/state'
 
   let loading = true
@@ -36,8 +36,22 @@
   $: canProceed = selectedUsb && selectedSd && confirmed && selectedUsb.path !== selectedSd.path
 
   function fmtSize(bytes: number) {
+    if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(0) + ' MB'
     return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB'
   }
+
+  const USB_TYPES = ['wii', 'gcn']
+  const SD_ROM_TYPES = ['n64', 'ps1', 'snes', 'nes', 'gba']
+
+  $: selectedGames = $library.filter(g => g.selected)
+  $: usbBytes  = selectedGames.filter(g => USB_TYPES.includes(g.type)).reduce((s, g) => s + g.sizeBytes, 0)
+  $: sdRomBytes = selectedGames.filter(g => SD_ROM_TYPES.includes(g.type)).reduce((s, g) => s + g.sizeBytes, 0)
+  $: wiiCount  = selectedGames.filter(g => g.type === 'wii').length
+  $: gcnCount  = selectedGames.filter(g => g.type === 'gcn').length
+  $: romCount  = selectedGames.filter(g => SD_ROM_TYPES.includes(g.type)).length
+
+  $: usbFit = !selectedUsb || usbBytes <= selectedUsb.sizeBytes * 0.95
+  $: sdFit  = !selectedSd  || sdRomBytes <= selectedSd.sizeBytes * 0.90 // homebrew also lives on SD
 
   function next() { step.set(3) }
   function back() { step.set(1) }
@@ -77,6 +91,36 @@
         {/each}
       </select>
     </div>
+
+    {#if selectedGames.length > 0}
+      <div class="storage-estimate">
+        <div class="est-row">
+          <span class="est-label">USB (Wii{gcnCount > 0 ? ' + GCN' : ''} games)</span>
+          <span class="est-val" class:over={!usbFit}>
+            {fmtSize(usbBytes)} needed
+            {#if selectedUsb}· {fmtSize(selectedUsb.sizeBytes)} available{/if}
+            {#if wiiCount > 0}<span class="count">{wiiCount} Wii</span>{/if}
+            {#if gcnCount > 0}<span class="count">{gcnCount} GCN</span>{/if}
+          </span>
+        </div>
+        {#if romCount > 0}
+          <div class="est-row">
+            <span class="est-label">SD card (emulator ROMs)</span>
+            <span class="est-val" class:over={!sdFit}>
+              {fmtSize(sdRomBytes)} needed
+              {#if selectedSd}· {fmtSize(selectedSd.sizeBytes)} available{/if}
+              <span class="count">{romCount} ROMs</span>
+            </span>
+          </div>
+        {/if}
+        {#if !usbFit}
+          <p class="over-warn">⚠ USB drive may be too small for selected games.</p>
+        {/if}
+        {#if !sdFit}
+          <p class="over-warn">⚠ SD card may not have enough space for ROMs + homebrew.</p>
+        {/if}
+      </div>
+    {/if}
 
     {#if selectedUsb || selectedSd}
       <div class="warning-box">
@@ -121,6 +165,17 @@
     background: #12121a; border: 1px solid #2a2a3e; color: #e8e8f0;
     padding: 10px 12px; border-radius: 6px; font-size: 13px; width: 100%; max-width: 480px;
   }
+
+  .storage-estimate {
+    background: #0d0d18; border: 1px solid #252535; border-radius: 8px;
+    padding: 12px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .est-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 12px; }
+  .est-label { color: #888; white-space: nowrap; }
+  .est-val { color: #ccc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .est-val.over { color: #ff7777; }
+  .count { background: #1e1e2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 1px 7px; font-size: 11px; color: #888; }
+  .over-warn { font-size: 12px; color: #ffb347; margin-top: 2px; }
 
   .warning-box {
     background: #1a1200; border: 1px solid #5a3800; border-radius: 6px;

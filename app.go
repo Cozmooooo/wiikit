@@ -88,8 +88,8 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 			return
 		}
 
-		emit("Copying games to USB...")
-		if err := drive.WriteGamesToUSB(a.ctx, games, usbDrive.Path, progress); err != nil {
+		emit("Copying games to USB/SD...")
+		if err := drive.WriteGames(a.ctx, games, usbDrive.Path, sdDrive.Path, progress); err != nil {
 			runtime.EventsEmit(a.ctx, "error", err.Error())
 			return
 		}

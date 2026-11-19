@@ -6,6 +6,21 @@ import (
 )
 
 const wiiMagic uint32 = 0x5D1C9EA3
+const gcnMagic uint32 = 0xC2339F3D
+
+// readMagic reads a uint32 at the given file offset.
+func readMagic(path string, offset int64) (uint32, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+	buf := make([]byte, 4)
+	if _, err := f.ReadAt(buf, offset); err != nil {
+		return 0, err
+	}
+	return binary.BigEndian.Uint32(buf), nil
+}
 
 func ParseISOHeader(path string) (gameID, title string, ok bool) {
 	f, err := os.Open(path)

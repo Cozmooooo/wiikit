@@ -1,11 +1,14 @@
 import { writable } from 'svelte/store'
 
+export type GameType = 'wii' | 'gcn' | 'n64' | 'ps1' | 'snes' | 'nes' | 'gba'
+
 export type Game = {
   path: string
   title: string
   gameId: string
   region: string
   sizeBytes: number
+  type: GameType
   selected?: boolean
 }
 

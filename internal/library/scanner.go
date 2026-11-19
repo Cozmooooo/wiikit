@@ -7,17 +7,75 @@ import (
 	"strings"
 )
 
+// GameType identifies where a file belongs and which emulator loads it.
+type GameType string
+
+const (
+	TypeWii  GameType = "wii"  // ISO/WBFS → USB /wbfs/
+	TypeGCN  GameType = "gcn"  // ISO       → USB /games/ (Nintendont)
+	TypeN64  GameType = "n64"  // ROM       → SD  /roms/N64/
+	TypePS1  GameType = "ps1"  // ROM/ISO   → SD  /roms/PSX/
+	TypeSNES GameType = "snes" // ROM       → SD  /roms/snes/
+	TypeNES  GameType = "nes"  // ROM       → SD  /roms/nes/
+	TypeGBA  GameType = "gba"  // ROM       → SD  /roms/gba/
+)
+
 type Game struct {
-	Path      string `json:"path"`
-	Title     string `json:"title"`
-	GameID    string `json:"gameId"`
-	Region    string `json:"region"`
-	SizeBytes int64  `json:"sizeBytes"`
+	Path      string   `json:"path"`
+	Title     string   `json:"title"`
+	GameID    string   `json:"gameId"`
+	Region    string   `json:"region"`
+	SizeBytes int64    `json:"sizeBytes"`
+	Type      GameType `json:"type"`
 }
 
-var wiiExtensions = map[string]bool{
-	".iso":  true,
-	".wbfs": true,
+// SDDestDir returns the SD card subdirectory for ROM types. Empty for USB types.
+func (g Game) SDDestDir() string {
+	switch g.Type {
+	case TypeN64:
+		return "roms/N64"
+	case TypePS1:
+		return "roms/PSX"
+	case TypeSNES:
+		return "roms/snes"
+	case TypeNES:
+		return "roms/nes"
+	case TypeGBA:
+		return "roms/gba"
+	default:
+		return ""
+	}
+}
+
+// GoesOnUSB reports whether this game belongs on the USB drive.
+func (g Game) GoesOnUSB() bool {
+	return g.Type == TypeWii || g.Type == TypeGCN
+}
+
+// extToType maps file extensions to game types.
+var extToType = map[string]GameType{
+	// Wii
+	".iso":  TypeWii,
+	".wbfs": TypeWii,
+	// N64
+	".z64": TypeN64,
+	".n64": TypeN64,
+	".v64": TypeN64,
+	// PS1
+	".bin": TypePS1,
+	".cue": TypePS1,
+	".img": TypePS1,
+	// SNES
+	".smc": TypeSNES,
+	".sfc": TypeSNES,
+	".fig": TypeSNES,
+	// NES
+	".nes": TypeNES,
+	".fds": TypeNES,
+	// GBA
+	".gba": TypeGBA,
+	".gbc": TypeGBA,
+	".gb":  TypeGBA,
 }
 
 func ScanLibrary(roots []string) ([]Game, error) {
@@ -26,18 +84,14 @@ func ScanLibrary(roots []string) ([]Game, error) {
 	for _, root := range roots {
 		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
-				return nil // skip unreadable dirs
+				return nil
 			}
 			if d.IsDir() {
 				return nil
 			}
 
 			ext := strings.ToLower(filepath.Ext(path))
-			if !wiiExtensions[ext] {
-				return nil
-			}
-
-			gameID, title, ok := ParseISOHeader(path)
+			gType, ok := extToType[ext]
 			if !ok {
 				return nil
 			}
@@ -47,12 +101,36 @@ func ScanLibrary(roots []string) ([]Game, error) {
 				return nil
 			}
 
+			// Wii ISOs: parse header for title + game ID
+			if gType == TypeWii {
+				gameID, title, ok := ParseISOHeader(path)
+				if !ok {
+					return nil
+				}
+				// GCN ISOs have a different magic — recheck type
+				magic2, _ := readMagic(path, 0x1C)
+				if magic2 == gcnMagic {
+					gType = TypeGCN
+				}
+				games = append(games, Game{
+					Path:      path,
+					Title:     title,
+					GameID:    gameID,
+					Region:    regionFromID(gameID),
+					SizeBytes: info.Size(),
+					Type:      gType,
+				})
+				return nil
+			}
+
+			// ROMs: use filename as title
+			base := filepath.Base(path)
+			title := strings.TrimSuffix(base, filepath.Ext(base))
 			games = append(games, Game{
 				Path:      path,
 				Title:     title,
-				GameID:    gameID,
-				Region:    regionFromID(gameID),
 				SizeBytes: info.Size(),
+				Type:      gType,
 			})
 			return nil
 		})
