@@ -69,6 +69,15 @@ jobs:
       - name: Build
         run: wails build -platform ${{ matrix.platform }} -o ${{ matrix.artifact }}
 
+      - name: Rename macOS app bundle
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # wails ignores -o for the .app bundle dir; rename it to match the artifact
+          if [ -d "build/bin/wiikit.app" ]; then
+            mv "build/bin/wiikit.app" "build/bin/${{ matrix.artifact }}.app"
+          fi
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
