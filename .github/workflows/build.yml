@@ -20,11 +20,11 @@ jobs:
           - os: macos-latest
             platform: darwin/amd64
             artifact: wiikit-macos-amd64
-            binary: build/bin/wiikit-macos-amd64.app
+            binary: build/bin/wiikit-macos-amd64.zip
           - os: macos-latest
             platform: darwin/arm64
             artifact: wiikit-macos-arm64
-            binary: build/bin/wiikit-macos-arm64.app
+            binary: build/bin/wiikit-macos-arm64.zip
           - os: ubuntu-latest
             platform: linux/amd64
             artifact: wiikit-linux-amd64
@@ -69,14 +69,13 @@ jobs:
       - name: Build
         run: wails build -platform ${{ matrix.platform }} -o ${{ matrix.artifact }}
 
-      - name: Rename macOS app bundle
+      - name: Package macOS app bundle
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          # wails ignores -o for the .app bundle dir; rename it to match the artifact
-          if [ -d "build/bin/wiikit.app" ]; then
-            mv "build/bin/wiikit.app" "build/bin/${{ matrix.artifact }}.app"
-          fi
+          # wails ignores -o for the .app bundle dir; rename and zip it for release upload
+          mv "build/bin/wiikit.app" "build/bin/${{ matrix.artifact }}.app"
+          cd build/bin && zip -r "${{ matrix.artifact }}.zip" "${{ matrix.artifact }}.app"
 
       - uses: actions/upload-artifact@v4
         with:
