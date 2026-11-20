@@ -60,8 +60,8 @@
     {
       "name": "priiloader",
       "version": "0.10.0",
-      "url": "https://github.com/DacoTaco/priiloader/releases/download/0.10.0/Priiloader_v0_10_0.zip",
-      "sha256": "",
+      "url": "https://github.com/DacoTaco/priiloader/releases/download/0.10.0/Priiloader_v0_10.zip",
+      "sha256": "312881836bc62ae55d496a9caef987d19493f635e26079bc60ecde08a2a31c1d",
       "dest": "sd://apps/priiloader/"
     },
     {
@@ -75,8 +75,8 @@
     {
       "name": "hackmii-installer",
       "version": "1.2",
-      "url": "https://bootmii.org/download/hackmii_installer_v1.2.zip",
-      "sha256": "",
+      "url": "https://bootmii.org/hackmii_installer_v1.2.zip",
+      "sha256": "32b7406956860ffb50d46f83e5fb6b8d67cd2612781cd97619d0c2371c84c945",
       "dest": "sd://",
       "_note": "HackMii Installer v1.2 — boot.dol placed at SD root. User runs LetterBomb (MAC-specific, generated at please.hackmii.com) which launches this installer to install HBC + BootMii. SHA256 left empty; will be pinned after first verified download."
     },
@@ -98,7 +98,7 @@
       "name": "wiilink-patcher-macos-x64",
       "version": "v1.5.3",
       "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-macOS-x64.tar.gz",
-      "sha256": "",
+      "sha256": "751f431f2b62b77e3ac9eb75220fb079007de7c57c082b76fa09344337fdedca",
       "dest": ""
     },
     {
