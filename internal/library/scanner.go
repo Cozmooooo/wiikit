@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -139,7 +140,39 @@ func ScanLibrary(roots []string) ([]Game, error) {
 		}
 	}
 
+	games = deduplicateAndSort(games)
 	return games, nil
+}
+
+// deduplicateAndSort removes duplicate Wii/GCN games by GameID (keeps largest file),
+// then sorts all games by title within each type.
+func deduplicateAndSort(games []Game) []Game {
+	seen := make(map[string]int) // GameID → index in result
+	result := make([]Game, 0, len(games))
+
+	for _, g := range games {
+		if g.GameID == "" {
+			result = append(result, g)
+			continue
+		}
+		key := strings.ToUpper(g.GameID)
+		if idx, exists := seen[key]; exists {
+			if g.SizeBytes > result[idx].SizeBytes {
+				result[idx] = g
+			}
+		} else {
+			seen[key] = len(result)
+			result = append(result, g)
+		}
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Type != result[j].Type {
+			return result[i].Type < result[j].Type
+		}
+		return strings.ToLower(result[i].Title) < strings.ToLower(result[j].Title)
+	})
+	return result
 }
 
 func regionFromID(gameID string) string {

@@ -107,8 +107,12 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 			return
 		}
 
-		// Priiloader auto-boot config (Wii only)
+		// Splash screen + Priiloader (Wii only)
 		if consoleType == ConsoleWii {
+			emit("Downloading Krunk splash screen...")
+			if err := homebrew.WriteSplashDOL(a.ctx, sdDrive.Path, emit); err != nil {
+				emit("Warning: splash screen skipped: " + err.Error())
+			}
 			emit("Writing Priiloader auto-boot config...")
 			if err := homebrew.WritePriiloaderConfig(sdDrive.Path); err != nil {
 				emit("Warning: could not write priiloader.cfg: " + err.Error())

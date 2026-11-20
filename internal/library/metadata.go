@@ -3,6 +3,7 @@ package library
 import (
 	"encoding/binary"
 	"os"
+	"strings"
 )
 
 const wiiMagic uint32 = 0x5D1C9EA3
@@ -47,7 +48,7 @@ func ParseISOHeader(path string) (gameID, title string, ok bool) {
 	for end < len(titleBytes) && titleBytes[end] != 0 {
 		end++
 	}
-	title = string(titleBytes[:end])
+	title = strings.TrimSpace(string(titleBytes[:end]))
 	if title == "" {
 		title = gameID
 	}

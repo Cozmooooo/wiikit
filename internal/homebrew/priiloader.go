@@ -17,12 +17,8 @@ func WritePriiloaderConfig(sdRoot string) error {
 	cfg := `# WiiKit Priiloader Configuration
 # Generated automatically — edit with care.
 
-# autoboot: 0=disabled, 1=WiiMenu, 2=priiloader, 3=installed_file, 4=BootMii
-autoboot=3
-
-# Title to boot: USBLoader GX (HAXLGX in hex = 48415857-47584758)
-# This launches USBLoader GX from the Wii Menu channel.
-autoboot_title=0001000148415857
+# autoboot: 0=disabled, 1=WiiMenu, 2=priiloader, 3=installed_file, 4=BootMii, 5=sd:/boot.dol
+autoboot=5
 
 # Skip disc check on boot
 skip_title_intro=1

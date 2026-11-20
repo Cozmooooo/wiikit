@@ -162,11 +162,15 @@ func extractTarGz(archivePath, destDir string) (string, error) {
 	return firstExe, nil
 }
 
-// patcherAssetName returns the manifest asset name for the current OS.
+// patcherAssetName returns the manifest asset name for the current OS/arch.
 func patcherAssetName() string {
 	switch runtime.GOOS {
 	case "darwin":
-		return "wiilink-patcher-macos"
+		// arm64 (Apple Silicon) and amd64 (Intel) have separate builds.
+		if runtime.GOARCH == "arm64" {
+			return "wiilink-patcher-macos"
+		}
+		return "wiilink-patcher-macos-x64"
 	case "windows":
 		return "wiilink-patcher-windows"
 	default:

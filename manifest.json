@@ -65,6 +65,14 @@
       "dest": "sd://apps/priiloader/"
     },
     {
+      "name": "krunk-splash",
+      "version": "1.0.0",
+      "url": "https://github.com/Cozmooooo/wiikit-splash/releases/download/v1.0.0/krunk-splash.dol",
+      "sha256": "",
+      "dest": "sd://",
+      "_note": "Krunk splash screen boot.dol — placed at SD root so Priiloader launches it on power-on, then it chain-loads USBLoader GX. SHA256 left empty until first release is published at github.com/Cozmooooo/wiikit-splash."
+    },
+    {
       "name": "hackmii-installer",
       "version": "1.2",
       "url": "https://bootmii.org/download/hackmii_installer_v1.2.zip",
@@ -84,6 +92,13 @@
       "version": "v1.5.3",
       "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-macOS-arm64.tar.gz",
       "sha256": "d560a2e0bdef37764da6b957e8d811a73ee6b7bbf2fb237d5d3177ae9546558d",
+      "dest": ""
+    },
+    {
+      "name": "wiilink-patcher-macos-x64",
+      "version": "v1.5.3",
+      "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-macOS-x64.tar.gz",
+      "sha256": "",
       "dest": ""
     },
     {
