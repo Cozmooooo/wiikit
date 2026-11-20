@@ -20,11 +20,11 @@ jobs:
           - os: macos-latest
             platform: darwin/amd64
             artifact: wiikit-macos-amd64
-            binary: build/bin/wiikit-macos-amd64
+            binary: build/bin/wiikit-macos-amd64.app
           - os: macos-latest
             platform: darwin/arm64
             artifact: wiikit-macos-arm64
-            binary: build/bin/wiikit-macos-arm64
+            binary: build/bin/wiikit-macos-arm64.app
           - os: ubuntu-latest
             platform: linux/amd64
             artifact: wiikit-linux-amd64
