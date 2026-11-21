@@ -79,6 +79,15 @@ func containsString(slice []string, s string) bool {
 	return false
 }
 
+// ResolveDestPath is exported for the sandbox CLI and tests.
+func ResolveDestPath(destPath, sdRoot string) string { return resolveDestPath(destPath, sdRoot) }
+
+// ExtractZip is exported for the sandbox CLI and tests.
+func ExtractZip(zipPath, destDir string) error { return extractZip(zipPath, destDir) }
+
+// CopyFile is exported for the sandbox CLI and tests.
+func CopyFile(src, dst string) error { return copyFile(src, dst) }
+
 func resolveDestPath(destPath, sdRoot string) string {
 	p := strings.TrimPrefix(destPath, "sd://")
 	return filepath.Join(sdRoot, filepath.FromSlash(p))
