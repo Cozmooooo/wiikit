@@ -122,7 +122,15 @@
     <div class="source-error">eBay: {ebayError}</div>
   {/if}
   {#if fbError}
-    <div class="source-error">Facebook: {fbError}</div>
+    <div class="source-error">
+      Facebook: {fbError}
+      <a
+        class="fb-fallback"
+        href="https://www.facebook.com/marketplace/search?query={encodeURIComponent(query)}&minPrice={minPrice}&maxPrice={maxPrice}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >Search on FB Marketplace →</a>
+    </div>
   {/if}
 
   {#if loading}
@@ -278,7 +286,20 @@
     padding: 8px 12px;
     color: #fca5a5;
     font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
+  .fb-fallback {
+    color: #60a5fa;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+  .fb-fallback:hover { text-decoration: underline; }
 
   .loading-state, .empty-state {
     display: flex;

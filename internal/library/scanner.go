@@ -102,10 +102,21 @@ func ScanLibrary(roots []string) ([]Game, error) {
 				return nil
 			}
 
-			// Wii ISOs: parse header for title + game ID
+			// Wii ISOs: parse header for title + game ID.
+			// Falls back to PS1 when the header doesn't match — PS1 games are
+			// commonly distributed as .iso and would otherwise be silently dropped.
 			if gType == TypeWii {
 				gameID, title, ok := ParseISOHeader(path)
 				if !ok {
+					// Not a Wii/GCN disc image — treat as PS1
+					base := filepath.Base(path)
+					ps1Title := strings.TrimSuffix(base, filepath.Ext(base))
+					games = append(games, Game{
+						Path:      path,
+						Title:     ps1Title,
+						SizeBytes: info.Size(),
+						Type:      TypePS1,
+					})
 					return nil
 				}
 				// GCN ISOs have a different magic — recheck type
