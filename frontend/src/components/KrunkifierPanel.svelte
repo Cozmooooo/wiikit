@@ -16,6 +16,7 @@
   }
 
   let installing = false
+  let confirming = false   // show format-confirm overlay
   let done = false
   let log: string[] = []
   let progress = 0
@@ -89,14 +90,22 @@
     return result
   }
 
-  async function krunkify() {
+  function requestKrunkify() {
     const usb = get(krunkUsbDrive)
     const sd  = get(krunkSdDrive)
     if (!usb || !sd) { errorMsg = 'Plug in both a USB drive and an SD card first.'; return }
+    errorMsg = ''
+    confirming = true
+  }
+
+  async function confirmKrunkify() {
+    confirming = false
+    const usb = get(krunkUsbDrive)
+    const sd  = get(krunkSdDrive)
+    if (!usb || !sd) return
 
     installing = true
     done = false
-    errorMsg = ''
     log = []
     progress = 0
     startTime = Date.now()
@@ -115,9 +124,9 @@
     log = []
     errorMsg = ''
     progress = 0
+    confirming = false
     krunkUsbDrive.set(null)
     krunkSdDrive.set(null)
-    // Re-auto-assign from detected drives
     autoAssign(get(krunkDetectedDrives))
   }
 </script>
@@ -237,16 +246,45 @@
         </div>
       </section>
 
+      <!-- Ethernet toggle (Wii Mini only) -->
+      {#if $consoleType === 'wiimini'}
+        <section class="section">
+          <div class="section-label">OPTIONS</div>
+          <label class="toggle-row">
+            <input type="checkbox" bind:checked={$ethernetEnabled} />
+            <span>Ethernet Enabler (USB adapter required)</span>
+          </label>
+        </section>
+      {/if}
+
       {#if errorMsg}
         <div class="error-msg">{errorMsg}</div>
+      {/if}
+
+      <!-- Confirm overlay -->
+      {#if confirming}
+        <div class="confirm-overlay">
+          <div class="confirm-box">
+            <div class="confirm-title">⚠ This will ERASE both drives</div>
+            <div class="confirm-drives">
+              <div class="confirm-drive">📦 USB: <strong>{$krunkUsbDrive?.path}</strong> ({fmt($krunkUsbDrive?.sizeBytes ?? 0)})</div>
+              <div class="confirm-drive">💾 SD: <strong>{$krunkSdDrive?.path}</strong> ({fmt($krunkSdDrive?.sizeBytes ?? 0)})</div>
+            </div>
+            <div class="confirm-hint">All existing data will be permanently deleted.</div>
+            <div class="confirm-actions">
+              <button class="confirm-cancel" on:click={() => confirming = false}>Cancel</button>
+              <button class="confirm-go" on:click={confirmKrunkify}>Yes, KRUNKIFY</button>
+            </div>
+          </div>
+        </div>
       {/if}
 
       <!-- KRUNKIFY button -->
       <button
         class="krunkify-btn"
         class:ready={!!$krunkUsbDrive && !!$krunkSdDrive}
-        disabled={!$krunkUsbDrive || !$krunkSdDrive}
-        on:click={krunkify}
+        disabled={!$krunkUsbDrive || !$krunkSdDrive || confirming}
+        on:click={requestKrunkify}
       >
         ⚡ KRUNKIFY
       </button>
@@ -396,6 +434,68 @@
   .krunkify-btn.ready:active { transform: translateY(0); }
 
   .hint { text-align: center; font-size: 12px; color: #334155; }
+
+  /* Ethernet toggle */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #94a3b8;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-row input[type="checkbox"] { accent-color: #7c3aed; width: 14px; height: 14px; }
+
+  /* Confirm overlay */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .confirm-box {
+    background: #0d0d18;
+    border: 1px solid #450a0a;
+    border-radius: 14px;
+    padding: 28px 32px;
+    max-width: 400px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .confirm-title { font-size: 16px; font-weight: 700; color: #fca5a5; }
+  .confirm-drives { display: flex; flex-direction: column; gap: 6px; }
+  .confirm-drive { font-size: 13px; color: #94a3b8; }
+  .confirm-drive strong { color: #e2e8f0; }
+  .confirm-hint { font-size: 12px; color: #64748b; }
+  .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 4px; }
+  .confirm-cancel {
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid #334155;
+    border-radius: 7px;
+    color: #64748b;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .confirm-cancel:hover { border-color: #475569; color: #94a3b8; }
+  .confirm-go {
+    padding: 8px 20px;
+    background: #7f1d1d;
+    border: 1px solid #991b1b;
+    border-radius: 7px;
+    color: #fca5a5;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .confirm-go:hover { background: #991b1b; }
 
   /* Progress / Done */
   .progress-screen, .done-screen {

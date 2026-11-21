@@ -105,6 +105,10 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 			return
 		}
 
+		if err := drive.WriteReadme(usbDrive.Path); err != nil {
+			emit("Warning: could not write HOW_TO_ADD_GAMES.txt: " + err.Error())
+		}
+
 		emit("Loading homebrew manifest...")
 		manifest, err := homebrew.LoadManifest("manifest.json")
 		if err != nil {
