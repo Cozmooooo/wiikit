@@ -27,6 +27,12 @@
   let reuseSD = false
   let skipWiiLink = false
   let sessionCount = 0
+  let logEl: HTMLDivElement
+
+  function scrollLog() {
+    if (logEl) setTimeout(() => { logEl.scrollTop = logEl.scrollHeight }, 0)
+  }
+  $: log, scrollLog()
 
   // Drive auto-assignment: largest removable → USB, next → SD
   function autoAssign(drives: DriveInfo[]) {
@@ -57,7 +63,10 @@
     EventsOn('drive-inserted', handleInserted)
     EventsOn('drive-removed',  handleRemoved)
     EventsOn('log',      (msg: string) => { log = [...log, msg] })
-    EventsOn('progress', (p: { stage?: string }) => { if (p.stage) log = [...log, p.stage] })
+    EventsOn('progress', (p: { stage?: string; bytesDone?: number; bytesTotal?: number }) => {
+      if (p.stage) log = [...log, p.stage]
+      if (p.bytesTotal && p.bytesTotal > 0) progress = Math.round((p.bytesDone ?? 0) / p.bytesTotal * 100)
+    })
     EventsOn('error',    (msg: string) => { errorMsg = msg; installing = false })
     EventsOn('done',     () => {
       installing = false
@@ -161,7 +170,7 @@
     <div class="progress-screen">
       <div class="progress-label">Krunkifying... {elapsed}</div>
       <div class="progress-bar-track"><div class="progress-bar-fill" style="width:{progress}%"></div></div>
-      <div class="log-scroll">
+      <div class="log-scroll" bind:this={logEl}>
         {#each log.slice(-40) as line}
           <div class="log-line">{line}</div>
         {/each}
@@ -243,13 +252,13 @@
       <section class="section">
         <div class="section-label">CONSOLE</div>
         <div class="pack-row">
-          {#each [['wii','Wii'], ['wiimini','Wii Mini'], ['wiiu','Wii U']] as [val, label]}
+          {#each [['wii','🎮','Wii'], ['wiimini','🕹️','Wii Mini'], ['wiiu','📺','Wii U']] as [val, icon, label]}
             <button
               class="pack-btn"
               class:active={$consoleType === val}
               on:click={() => consoleType.set(val as any)}
             >
-              {label}
+              {icon} {label}
             </button>
           {/each}
         </div>
@@ -318,7 +327,14 @@
         {#if !$krunkUsbDrive || !$krunkSdDrive}
           Plug in USB + SD card to unlock
         {:else}
-          Ready · {filterGames($krunkPack).length} games selected
+          {@const games = filterGames($krunkPack)}
+          {@const wiiCount = games.filter(g => g.type === 'wii').length}
+          {@const gcnCount = games.filter(g => g.type === 'gcn').length}
+          {@const romCount = games.filter(g => !['wii','gcn'].includes(g.type)).length}
+          Ready · {games.length} games
+          {#if wiiCount > 0} · {wiiCount} Wii{/if}
+          {#if gcnCount > 0} · {gcnCount} GCN{/if}
+          {#if romCount > 0} · {romCount} ROMs{/if}
         {/if}
       </div>
     </div>
