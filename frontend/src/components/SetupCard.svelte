@@ -13,9 +13,9 @@
   const TIRAMISU_URL = 'https://wiiu.hacks.guide'
 
   onMount(async () => {
-    wiiLinkQR   = await QRCode.toDataURL(WIILINK_URL,   { width: 180, margin: 1, color: { dark: '#000', light: '#fff' } })
-    blueBombQR  = await QRCode.toDataURL(BLUEBOMB_URL,  { width: 180, margin: 1, color: { dark: '#000', light: '#fff' } })
-    tiramisuQR  = await QRCode.toDataURL(TIRAMISU_URL,  { width: 180, margin: 1, color: { dark: '#000', light: '#fff' } })
+    wiiLinkQR   = await QRCode.toDataURL(WIILINK_URL,   { width: 200, margin: 1, color: { dark: '#000', light: '#fff' } })
+    blueBombQR  = await QRCode.toDataURL(BLUEBOMB_URL,  { width: 200, margin: 1, color: { dark: '#000', light: '#fff' } })
+    tiramisuQR  = await QRCode.toDataURL(TIRAMISU_URL,  { width: 200, margin: 1, color: { dark: '#000', light: '#fff' } })
   })
 
   $: games = $library.filter(g => g.selected)
@@ -43,8 +43,13 @@
   <!-- PRINTABLE CARD -->
   <div class="card print-card" id="setup-card">
     <div class="card-header">
-      <div class="card-title">🎮 Your Modded Console</div>
-      <div class="card-sub">Pre-configured by WiiKit · Plug in and play</div>
+      <div class="card-header-left">
+        <div class="card-title">🎮 Your Modded Console</div>
+        <div class="card-sub">Pre-configured by KRUNK · Plug in and play</div>
+      </div>
+      <div class="card-badge">
+        {#if isWii}Wii{:else if isWiiU}Wii U{:else if isWiiMiniEth}Wii Mini + Ethernet{:else}Wii Mini{/if}
+      </div>
     </div>
 
     <div class="card-body">
@@ -54,8 +59,8 @@
           <h3>What's Installed</h3>
           <ul>
             <li>Homebrew Channel (HBC)</li>
-            <li>USBLoader GX — load games from USB</li>
-            <li>WiiFlow Lite — alternate game launcher</li>
+            <li>WiiFlow — game launcher with coverflow UI</li>
+            <li>USBLoader GX — backup launcher</li>
             <li>Nintendont — GameCube game support</li>
             <li>Not64 — Nintendo 64 emulator</li>
             <li>WiiStation — PlayStation 1 emulator</li>
@@ -102,7 +107,7 @@
               <li>Plug in USB drive (back USB port)</li>
               <li>Insert SD card</li>
               <li>Power on → Homebrew Channel</li>
-              <li>Launch <strong>USBLoader GX</strong> to play games</li>
+              <li>Launch <strong>WiiFlow</strong> to play games</li>
               <li>Scan QR code above to activate online channels</li>
             </ol>
           </section>
@@ -119,7 +124,7 @@
             <ol>
               <li>Plug in USB drive to Wii U</li>
               <li>Launch vWii from Wii U Menu</li>
-              <li>Open Homebrew Channel → USBLoader GX</li>
+              <li>Open Homebrew Channel → WiiFlow to play games</li>
               <li>Note: WiiLink not available in vWii mode</li>
             </ol>
           </section>
@@ -138,7 +143,7 @@
               <li>Power on → Homebrew Channel</li>
               <li>Run <strong>Ethernet Enabler</strong> once (makes NAND change)</li>
               <li>Plug in USB Ethernet adapter (ASIX AX88179)</li>
-              <li>Launch USBLoader GX to play games</li>
+              <li>Launch <strong>WiiFlow</strong> to play games</li>
               <li>Scan QR code above to activate online channels</li>
             </ol>
           </section>
@@ -155,7 +160,7 @@
             <ol>
               <li>Plug in USB drive (only USB port)</li>
               <li>Power on → Homebrew Channel</li>
-              <li>Launch USBLoader GX to play games</li>
+              <li>Launch <strong>WiiFlow</strong> to play games</li>
               <li>Note: No WiFi — online features unavailable</li>
             </ol>
           </section>
@@ -164,7 +169,9 @@
     </div>
 
     <div class="card-footer">
-      Prepped with WiiKit · All homebrew sourced from verified public repositories
+      <span>Prepped by <strong>KRUNK</strong> · krunk.site/support</span>
+      <span class="footer-sep">·</span>
+      <span>See <strong>HOW_TO_ADD_GAMES.txt</strong> on your USB drive to add your own games</span>
     </div>
   </div>
 </div>
@@ -199,9 +206,23 @@
     background: #1a1230;
     color: #fff;
     padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
+  .card-header-left { display: flex; flex-direction: column; }
   .card-title { font-size: 18px; font-weight: 700; }
   .card-sub   { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+  .card-badge {
+    padding: 4px 12px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
 
   .card-body {
     display: flex;
@@ -227,7 +248,7 @@
   ol li { padding: 3px 0; color: #222; }
 
   .qr-section { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 16px; }
-  .qr { width: 120px; height: 120px; border: 1px solid #ddd; border-radius: 4px; }
+  .qr { width: 140px; height: 140px; border: 1px solid #ddd; border-radius: 4px; }
   .qr-label { text-align: center; }
   .qr-label strong { display: block; font-size: 12px; margin-bottom: 2px; }
   .qr-label span { font-size: 11px; color: #555; line-height: 1.4; }
@@ -237,9 +258,16 @@
     color: #888;
     font-size: 10px;
     text-align: center;
-    padding: 8px;
+    padding: 8px 16px;
     border-top: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
   }
+  .card-footer strong { color: #444; }
+  .footer-sep { opacity: 0.4; }
 
   /* Print styles */
   @media print {
