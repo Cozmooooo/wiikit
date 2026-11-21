@@ -1,5 +1,21 @@
 <script lang="ts">
+  // Rough sell prices after KRUNK prep (Essentials pack)
+  const SELL_PRICES: Record<string, number> = {
+    wii:     75,
+    wiimini: 55,
+    wiiu:    95,
+  }
+  const DEFAULT_SELL_PRICE = 75
+
+  const PRESETS = [
+    { label: 'Wii',       query: 'Nintendo Wii console',      key: 'wii'     },
+    { label: 'Wii Mini',  query: 'Nintendo Wii Mini console', key: 'wiimini' },
+    { label: 'Wii U',     query: 'Nintendo Wii U console',    key: 'wiiu'    },
+    { label: 'Bundle',    query: 'Nintendo Wii console bundle with games', key: 'wii' },
+  ]
+
   let query = 'Nintendo Wii console'
+  let activePresetKey = 'wii'
   let maxPrice = 60
   let minPrice = 5
   let loading = false
@@ -7,6 +23,14 @@
   let ebayError = ''
   let fbError = ''
   let searched = false
+
+  $: sellPrice = SELL_PRICES[activePresetKey] ?? DEFAULT_SELL_PRICE
+  $: avgPrice = listings.length
+    ? listings.reduce((s, l) => s + (l.price || 0), 0) / listings.length
+    : 0
+  $: bestMargin = listings.length
+    ? Math.max(...listings.map(l => sellPrice - (l.price || 0)))
+    : 0
 
   async function search() {
     loading = true
@@ -27,18 +51,55 @@
     }
   }
 
-  function scoreColor(score: number): string {
-    if (score >= 75) return '#22c55e'
-    if (score >= 50) return '#f59e0b'
+  function applyPreset(p: typeof PRESETS[0]) {
+    query = p.query
+    activePresetKey = p.key
+    search()
+  }
+
+  function flipTier(score: number): { label: string; color: string; bg: string } {
+    if (score >= 75) return { label: 'HIGH',  color: '#22c55e', bg: '#052e16' }
+    if (score >= 50) return { label: 'MED',   color: '#f59e0b', bg: '#1c1407' }
+    return               { label: 'LOW',   color: '#ef4444', bg: '#1c0707' }
+  }
+
+  function margin(price: number): number {
+    return sellPrice - price
+  }
+
+  function marginColor(m: number): string {
+    if (m >= 40) return '#22c55e'
+    if (m >= 20) return '#f59e0b'
     return '#ef4444'
   }
 
   function sourceLabel(source: string): string {
     return source === 'facebook' ? 'FB Marketplace' : 'eBay'
   }
+
+  function timeAgo(listedAt: string): string {
+    if (!listedAt) return ''
+    const d = new Date(listedAt)
+    if (isNaN(d.getTime())) return ''
+    const mins = Math.floor((Date.now() - d.getTime()) / 60000)
+    if (mins < 60)  return `${mins}m ago`
+    if (mins < 1440) return `${Math.floor(mins/60)}h ago`
+    return `${Math.floor(mins/1440)}d ago`
+  }
 </script>
 
 <div class="deals-panel">
+  <div class="presets-row">
+    {#each PRESETS as p}
+      <button
+        class="preset-btn"
+        class:active={activePresetKey === p.key && query === p.query}
+        on:click={() => applyPreset(p)}
+        disabled={loading}
+      >{p.label}</button>
+    {/each}
+  </div>
+
   <div class="search-bar">
     <input
       type="text"
@@ -75,11 +136,20 @@
     </div>
   {:else if listings.length > 0}
     <div class="results-header">
-      <span>{listings.length} deals found · sorted by flip potential</span>
+      <span>{listings.length} listings · avg <strong>${avgPrice.toFixed(0)}</strong></span>
+      {#if bestMargin > 0}
+        <span class="best-margin-pill" style="color:{marginColor(bestMargin)}">
+          best flip margin ~${bestMargin.toFixed(0)}
+        </span>
+      {/if}
+      <span class="sell-price-hint">assumes ~${sellPrice} sell</span>
     </div>
     <div class="listings-grid">
-      {#each listings as l}
-        <a class="listing-card" href={l.url} target="_blank" rel="noopener noreferrer">
+      {#each listings as l, i}
+        {@const tier = flipTier(l.score)}
+        {@const m = margin(l.price || 0)}
+        {@const ago = timeAgo(l.listedAt)}
+        <a class="listing-card" class:top-deal={i === 0} href={l.url} target="_blank" rel="noopener noreferrer">
           <div class="card-img">
             {#if l.imageUrl}
               <img src={l.imageUrl} alt={l.title} loading="lazy" />
@@ -89,24 +159,27 @@
             <div class="source-badge" class:fb={l.source === 'facebook'}>
               {sourceLabel(l.source)}
             </div>
+            {#if i === 0}
+              <div class="best-badge">🔥 Best Deal</div>
+            {/if}
           </div>
           <div class="card-body">
             <div class="card-title">{l.title}</div>
             <div class="card-meta">
               <span class="price">${l.price > 0 ? l.price.toFixed(2) : '?'}</span>
               {#if l.condition}<span class="condition">{l.condition}</span>{/if}
-              {#if l.location}<span class="location">📍 {l.location}</span>{/if}
+              {#if ago}<span class="ago">{ago}</span>{/if}
             </div>
-            <div class="score-row">
-              <div class="score-bar-bg">
-                <div
-                  class="score-bar-fill"
-                  style="width:{l.score}%; background:{scoreColor(l.score)}"
-                ></div>
+            {#if l.location}
+              <div class="location-row">📍 {l.location}</div>
+            {/if}
+            <div class="bottom-row">
+              <div class="margin-chip" style="color:{marginColor(m)}; background:{marginColor(m)}22">
+                {m >= 0 ? '+' : ''}{m.toFixed(0)} margin
               </div>
-              <span class="score-label" style="color:{scoreColor(l.score)}">
-                {Math.round(l.score)} / 100
-              </span>
+              <div class="tier-chip" style="color:{tier.color}; background:{tier.bg}">
+                FLIP: {tier.label}
+              </div>
             </div>
           </div>
         </a>
@@ -119,10 +192,32 @@
   .deals-panel {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     height: 100%;
     overflow: hidden;
   }
+
+  /* Quick presets */
+  .presets-row {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .preset-btn {
+    padding: 5px 14px;
+    background: #13131c;
+    border: 1px solid #252535;
+    border-radius: 20px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .preset-btn:hover:not(:disabled) { border-color: #f97316; color: #f97316; }
+  .preset-btn.active { background: #1a0a00; border-color: #f97316; color: #f97316; }
+  .preset-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .search-bar {
     display: flex;
@@ -140,6 +235,7 @@
     border-radius: 6px;
     color: #e2e8f0;
     font-size: 14px;
+    font-family: inherit;
   }
 
   .price-range {
@@ -158,6 +254,7 @@
     border-radius: 6px;
     color: #e2e8f0;
     font-size: 14px;
+    font-family: inherit;
   }
 
   .search-btn {
@@ -170,12 +267,9 @@
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
+    font-family: inherit;
   }
-
-  .search-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  .search-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
   .source-error {
     background: #2d1515;
@@ -208,14 +302,27 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .results-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
     color: #64748b;
     font-size: 13px;
   }
+  .results-header strong { color: #94a3b8; }
+  .best-margin-pill {
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(34,197,94,0.1);
+  }
+  .sell-price-hint { font-size: 11px; color: #334155; margin-left: auto; }
 
   .listings-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
     overflow-y: auto;
     padding-bottom: 16px;
   }
@@ -231,24 +338,16 @@
     display: flex;
     flex-direction: column;
   }
-
-  .listing-card:hover {
-    border-color: #f97316;
-    transform: translateY(-2px);
-  }
+  .listing-card:hover { border-color: #f97316; transform: translateY(-2px); }
+  .listing-card.top-deal { border-color: #78350f; }
 
   .card-img {
     position: relative;
-    height: 160px;
+    height: 140px;
     background: #1a1a24;
     overflow: hidden;
   }
-
-  .card-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; }
 
   .no-img {
     display: flex;
@@ -270,16 +369,25 @@
     background: #0070c9;
     color: white;
   }
+  .source-badge.fb { background: #1877f2; }
 
-  .source-badge.fb {
-    background: #1877f2;
+  .best-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #f97316;
+    color: white;
   }
 
   .card-body {
-    padding: 12px;
+    padding: 11px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 7px;
     flex: 1;
   }
 
@@ -301,43 +409,24 @@
     font-size: 12px;
     color: #64748b;
   }
+  .price { font-size: 15px; font-weight: 700; color: #e2e8f0; }
+  .condition { padding: 1px 6px; background: #1e293b; border-radius: 3px; }
+  .ago { color: #475569; font-size: 11px; }
 
-  .price {
-    font-size: 15px;
-    font-weight: 700;
-    color: #e2e8f0;
-  }
+  .location-row { font-size: 11px; color: #475569; }
 
-  .condition {
-    padding: 1px 6px;
-    background: #1e293b;
-    border-radius: 3px;
-  }
-
-  .score-row {
+  .bottom-row {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    gap: 7px;
     margin-top: auto;
+    flex-wrap: wrap;
   }
 
-  .score-bar-bg {
-    flex: 1;
-    height: 4px;
-    background: #1e293b;
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .score-bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.3s;
-  }
-
-  .score-label {
+  .margin-chip, .tier-chip {
+    padding: 2px 8px;
+    border-radius: 4px;
     font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
+    font-weight: 700;
+    letter-spacing: 0.3px;
   }
 </style>
