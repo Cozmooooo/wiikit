@@ -49,9 +49,11 @@
     usbDrive.set(null)
     sdDrive.set(null)
     log.set([])
+    progress.set({})
     done = false
     errorMsg = ''
     wiilinkOk = false
+    ethernetEnabled.set(false)
   }
 </script>
 
