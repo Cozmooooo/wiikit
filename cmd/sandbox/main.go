@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"wiikit/internal/homebrew"
+	"wiikit/internal/wiiflow"
 )
 
 var (
@@ -178,6 +179,39 @@ func main() {
 		os.RemoveAll(sdRoot)
 		os.MkdirAll(sdRoot, 0755)
 	}
+
+	// WiiFlow plugin config check (run once at the end, not per-asset)
+	fmt.Println("── wiiflow plugins")
+	if err := wiiflow.WritePlugins(sdRoot); err != nil {
+		fmt.Printf("   FAIL WritePlugins: %v\n", err)
+		fail++
+	} else {
+		pluginFiles := []string{
+			"WiiFlow/wiiflow.ini",
+			"WiiFlow/plugins/snes9xgx.ini",
+			"WiiFlow/plugins/fceugx.ini",
+			"WiiFlow/plugins/vbagx.ini",
+			"WiiFlow/plugins/not64.ini",
+			"WiiFlow/plugins/wiistation.ini",
+		}
+		pluginOk := true
+		for _, rel := range pluginFiles {
+			p := filepath.Join(sdRoot, filepath.FromSlash(rel))
+			if _, err := os.Stat(p); os.IsNotExist(err) {
+				fmt.Printf("   ✗ MISSING %s\n", rel)
+				pluginOk = false
+			} else {
+				fmt.Printf("   ✓ %s\n", rel)
+			}
+		}
+		if pluginOk {
+			fmt.Println("   PASS")
+			pass++
+		} else {
+			fail++
+		}
+	}
+	fmt.Println()
 
 	fmt.Printf("results: %d passed, %d failed\n", pass, fail)
 	if fail > 0 {

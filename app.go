@@ -6,8 +6,9 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"wiikit/internal/deals"
 	"wiikit/internal/drive"
-	"wiikit/internal/library"
 	"wiikit/internal/homebrew"
+	"wiikit/internal/library"
+	"wiikit/internal/wiiflow"
 	"wiikit/internal/wiilink"
 )
 
@@ -105,6 +106,11 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 		if err := homebrew.InstallStack(a.ctx, manifest, sdDrive.Path, string(consoleType), progress); err != nil {
 			runtime.EventsEmit(a.ctx, "error", err.Error())
 			return
+		}
+
+		emit("Writing WiiFlow plugin configs...")
+		if err := wiiflow.WritePlugins(sdDrive.Path); err != nil {
+			emit("Warning: wiiflow plugins: " + err.Error())
 		}
 
 		// Splash screen + Priiloader (Wii only)
