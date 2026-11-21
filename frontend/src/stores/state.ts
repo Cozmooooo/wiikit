@@ -41,3 +41,10 @@ export const progress = writable<Progress>({})
 export const formatConfirmed = writable(false)
 export const wiilinkConfirmed = writable(false)
 export const ethernetEnabled = writable(false)
+
+// Krunkifier stores
+export type PackTier = 'essentials' | 'pro' | 'complete'
+export const krunkPack = writable<PackTier>('essentials')
+export const krunkUsbDrive = writable<DriveInfo | null>(null)
+export const krunkSdDrive = writable<DriveInfo | null>(null)
+export const krunkDetectedDrives = writable<DriveInfo[]>([])

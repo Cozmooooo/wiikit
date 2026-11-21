@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"wiikit/internal/deals"
@@ -22,6 +23,15 @@ func NewApp() *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	go func() {
+		for event := range drive.WatchDrives(ctx, 2*time.Second) {
+			runtime.EventsEmit(a.ctx, "drive-"+event.Type, event.Drive)
+		}
+	}()
+}
+
+func (a *App) ClearCache() (int, error) {
+	return homebrew.ClearCache()
 }
 
 func (a *App) ListDrives() ([]drive.DriveInfo, error) {

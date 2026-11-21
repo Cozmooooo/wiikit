@@ -13,9 +13,11 @@ import (
 )
 
 func InstallStack(ctx context.Context, manifest *Manifest, sdRoot string, consoleType string, progress chan<- drive.Progress) error {
-	cacheDir, err := os.MkdirTemp("", "wiikit-cache-*")
+	// Temp dir only needed for pending assets (no SHA256 → can't use persistent cache).
+	// Most assets will hit the persistent cache and bypass this entirely.
+	cacheDir, err := os.MkdirTemp("", "wiikit-tmp-*")
 	if err != nil {
-		return fmt.Errorf("create cache dir: %w", err)
+		return fmt.Errorf("create temp dir: %w", err)
 	}
 	defer os.RemoveAll(cacheDir)
 

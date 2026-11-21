@@ -6,8 +6,9 @@
   import InstallPanel from './components/InstallPanel.svelte'
   import DealsPanel from './components/DealsPanel.svelte'
   import SetupCard from './components/SetupCard.svelte'
+  import KrunkifierPanel from './components/KrunkifierPanel.svelte'
 
-  let activeTab: 'wizard' | 'deals' | 'card' = 'wizard'
+  let activeTab: 'wizard' | 'deals' | 'card' | 'krunk' = 'wizard'
 </script>
 
 <main>
@@ -35,6 +36,13 @@
       >
         🃏 Setup Card
       </button>
+      <button
+        class="nav-tab krunk-tab"
+        class:active={activeTab === 'krunk'}
+        on:click={() => (activeTab = 'krunk')}
+      >
+        ⚡ Krunkifier
+      </button>
     </nav>
     {#if activeTab === 'wizard' && $step >= 0}
       <div class="steps">
@@ -56,6 +64,8 @@
       <DealsPanel />
     {:else if activeTab === 'card'}
       <SetupCard />
+    {:else if activeTab === 'krunk'}
+      <KrunkifierPanel />
     {:else if $step === 0}
       <ConsolePanel />
     {:else if $step === 1}
@@ -120,6 +130,12 @@
 
   .nav-tab:hover:not(.active) {
     color: #94a3b8;
+  }
+
+  .krunk-tab.active {
+    background: #1a0a00;
+    color: #f97316;
+    border: 1px solid #431407;
   }
 
   .steps { display: flex; align-items: center; gap: 8px; color: #555; font-size: 13px; min-width: 200px; justify-content: flex-end; }
