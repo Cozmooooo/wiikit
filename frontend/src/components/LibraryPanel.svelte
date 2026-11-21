@@ -92,6 +92,11 @@
     </button>
     {#if $library.length > 0}
       <span class="count">{$library.length} game{$library.length !== 1 ? 's' : ''} found</span>
+      {#if selected.length !== $library.length}
+        <span class="count sel-count">{selected.length} selected · {fmtGB(sdBytes + usbBytes)} GB</span>
+      {:else}
+        <span class="count">{fmtGB(sdBytes + usbBytes)} GB total</span>
+      {/if}
     {/if}
   </div>
 
@@ -106,7 +111,7 @@
     {#if selected.length > 0}
       <div class="meters">
         <div class="meter-row">
-          <span class="meter-label">SD Card (32 GB)</span>
+          <span class="meter-label">SD Card (~32 GB)</span>
           <div class="bar-track">
             <div class="bar" class:over={sdBytes > SD_CAPACITY} style="width:{pct(sdBytes, SD_CAPACITY)}%"></div>
           </div>
@@ -115,7 +120,7 @@
           </span>
         </div>
         <div class="meter-row">
-          <span class="meter-label">USB Drive (64 GB)</span>
+          <span class="meter-label">USB Drive (~64 GB)</span>
           <div class="bar-track">
             <div class="bar" class:over={usbBytes > USB_CAPACITY} style="width:{pct(usbBytes, USB_CAPACITY)}%"></div>
           </div>
@@ -169,7 +174,8 @@
   .sub { color: #888; margin-bottom: 20px; }
 
   .actions { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-  .count   { color: #666; font-size: 13px; }
+  .count     { color: #666; font-size: 13px; }
+  .sel-count { color: #7c6fef; }
   .error   { color: #e06c75; font-size: 13px; margin-bottom: 12px; }
   .empty   { color: #555; padding: 40px 0; text-align: center; }
 

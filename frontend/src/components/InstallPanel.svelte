@@ -1,10 +1,31 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import { library, usbDrive, sdDrive, installing, log, progress, step, wiilinkConfirmed, consoleType, ethernetEnabled } from '../stores/state'
+
+  const CONSOLE_LABELS: Record<string, string> = {
+    wii:     'Wii',
+    wiiu:    'Wii U',
+    wiimini: 'Wii Mini',
+  }
 
   let done = false
   let errorMsg = ''
   let wiilinkOk = false
+  let elapsedSecs = 0
+  let elapsedTimer: ReturnType<typeof setInterval> | null = null
+  let logEl: HTMLDivElement
+
   $: wiilinkConfirmed.set(wiilinkOk)
+
+  $: if ($installing) {
+    scrollLog()
+  }
+
+  function scrollLog() {
+    if (logEl) setTimeout(() => { logEl.scrollTop = logEl.scrollHeight }, 0)
+  }
+
+  $: $log, scrollLog()
 
   async function startInstall() {
     const usb = $usbDrive
@@ -15,6 +36,8 @@
     log.set([])
     done = false
     errorMsg = ''
+    elapsedSecs = 0
+    elapsedTimer = setInterval(() => { elapsedSecs++ }, 1000)
 
     const selectedGames = $library.filter(g => g.selected)
 
@@ -27,23 +50,36 @@
     window.runtime?.EventsOn('error', (msg: unknown) => {
       errorMsg = String(msg)
       installing.set(false)
+      stopTimer()
     })
     window.runtime?.EventsOn('done', () => {
       done = true
       installing.set(false)
+      stopTimer()
     })
 
     try {
-      await window.go.main.App.StartInstall(selectedGames, usb, sd, $consoleType, $ethernetEnabled)
+      // reuseSD=false, skipWiiLink=false — wizard always does a full fresh install
+      await window.go.main.App.StartInstall(selectedGames, usb, sd, $consoleType, $ethernetEnabled, false, false)
     } catch (e: unknown) {
       errorMsg = e instanceof Error ? e.message : String(e)
       installing.set(false)
+      stopTimer()
     }
+  }
+
+  function stopTimer() {
+    if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = null }
+  }
+
+  function fmtElapsed(s: number): string {
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0')
   }
 
   function back() { step.set(2) }
 
   function restart() {
+    stopTimer()
     step.set(0)
     library.set([])
     usbDrive.set(null)
@@ -52,9 +88,12 @@
     progress.set({})
     done = false
     errorMsg = ''
+    elapsedSecs = 0
     wiilinkOk = false
     ethernetEnabled.set(false)
   }
+
+  onDestroy(stopTimer)
 </script>
 
 <div class="install">
@@ -62,6 +101,10 @@
 
   {#if !$installing && !done && !errorMsg}
     <div class="summary">
+      <div class="summary-row">
+        <span>Console</span>
+        <strong>{CONSOLE_LABELS[$consoleType] ?? $consoleType}</strong>
+      </div>
       <div class="summary-row">
         <span>Games</span>
         <strong>{$library.filter(g => g.selected).length} selected</strong>
@@ -117,9 +160,16 @@
     {/if}
   {/if}
 
-  {#if $installing && $progress.stage}
+  {#if $installing}
     <div class="progress-bar-wrap">
-      <div class="progress-stage">{$progress.stage}</div>
+      <div class="progress-header">
+        {#if $progress.stage}
+          <span class="progress-stage">{$progress.stage}</span>
+        {:else}
+          <span class="progress-stage">Working…</span>
+        {/if}
+        <span class="elapsed">{fmtElapsed(elapsedSecs)}</span>
+      </div>
       {#if $progress.bytesTotal && $progress.bytesTotal > 0}
         <div class="progress-track">
           <div class="progress-fill" style="width: {Math.round(($progress.bytesDone ?? 0) / $progress.bytesTotal * 100)}%"></div>
@@ -130,7 +180,7 @@
   {/if}
 
   {#if $log.length > 0}
-    <div class="log-box">
+    <div class="log-box" bind:this={logEl}>
       {#each $log as line}
         <div class="log-line">{line}</div>
       {/each}
@@ -191,7 +241,9 @@
     background: #0a0a0f; border: 1px solid #1e1e2e; border-radius: 6px;
     padding: 12px 16px; margin-bottom: 16px;
   }
-  .progress-stage { font-size: 12px; color: #9f9; margin-bottom: 8px; font-family: monospace; }
+  .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .progress-stage { font-size: 12px; color: #9f9; font-family: monospace; }
+  .elapsed { font-size: 12px; color: #666; font-family: monospace; }
   .progress-track {
     height: 6px; background: #1e1e2e; border-radius: 3px; overflow: hidden; margin-bottom: 4px;
   }
