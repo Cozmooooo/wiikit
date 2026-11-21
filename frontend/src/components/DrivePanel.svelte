@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import { drives, usbDrive, sdDrive, step, formatConfirmed, library } from '../stores/state'
   import type { DriveInfo } from '../stores/state'
 
@@ -7,6 +7,8 @@
   let selectedUsb: DriveInfo | null = null
   let selectedSd: DriveInfo | null = null
   let confirmed = false
+  let newDrivePath = ''  // briefly highlights when a drive is auto-detected
+  let highlightTimer: ReturnType<typeof setTimeout> | null = null
 
   $: usbDrive.set(selectedUsb)
   $: sdDrive.set(selectedSd)
@@ -14,6 +16,26 @@
 
   onMount(async () => {
     await refreshDrives()
+
+    window.runtime?.EventsOn('drive-inserted', (d: DriveInfo) => {
+      drives.update(list => [...list.filter(x => x.path !== d.path), d])
+      // Flash the new drive in the list
+      newDrivePath = d.path
+      if (highlightTimer) clearTimeout(highlightTimer)
+      highlightTimer = setTimeout(() => { newDrivePath = '' }, 2500)
+    })
+
+    window.runtime?.EventsOn('drive-removed', (d: DriveInfo) => {
+      drives.update(list => list.filter(x => x.path !== d.path))
+      if (selectedUsb?.path === d.path) selectedUsb = null
+      if (selectedSd?.path  === d.path) selectedSd  = null
+    })
+  })
+
+  onDestroy(() => {
+    window.runtime?.EventsOff('drive-inserted')
+    window.runtime?.EventsOff('drive-removed')
+    if (highlightTimer) clearTimeout(highlightTimer)
   })
 
   async function refreshDrives() {
@@ -70,8 +92,11 @@
   {#if loading}
     <div class="empty">Detecting drives…</div>
   {:else if $drives.length === 0}
-    <div class="empty">No removable drives detected. Plug in your USB and SD card, then refresh.</div>
+    <div class="empty">No removable drives detected. Plug in your USB and SD card — they'll appear automatically.</div>
   {:else}
+    {#if newDrivePath}
+      <div class="new-drive-toast">⚡ New drive detected: {newDrivePath}</div>
+    {/if}
     <div class="drive-row">
       <label for="usb-select" class="drive-label">USB Drive (games)</label>
       <select id="usb-select" bind:value={selectedUsb}>
@@ -158,6 +183,12 @@
   button.primary { background: #7c6fef; border-color: #7c6fef; font-weight: 600; }
 
   .empty { color: #555; padding: 40px 0; text-align: center; }
+  .new-drive-toast {
+    background: #0d1a0d; border: 1px solid #1a4a1a; border-radius: 6px;
+    padding: 8px 14px; margin-bottom: 14px; color: #7fff7f; font-size: 13px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
   .drive-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
   .drive-label { font-weight: 500; font-size: 13px; color: #aaa; }

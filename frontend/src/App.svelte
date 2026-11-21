@@ -13,7 +13,7 @@
 
 <main>
   <header>
-    <div class="logo">🎮 WiiKit</div>
+    <div class="logo">🎮 WiiKit <span class="version">v1.2.3</span></div>
     <nav class="nav-tabs">
       <button
         class="nav-tab"
@@ -99,7 +99,8 @@
     gap: 20px;
   }
 
-  .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; }
+  .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; display: flex; align-items: baseline; gap: 6px; }
+  .version { font-size: 11px; font-weight: 500; color: #444; letter-spacing: 0; }
 
   .nav-tabs {
     display: flex;

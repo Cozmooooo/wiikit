@@ -1,20 +1,23 @@
 <script lang="ts">
   import { step, consoleType, ethernetEnabled, type ConsoleType } from '../stores/state'
 
-  const consoles: { id: ConsoleType; label: string; sub: string; badge?: string }[] = [
+  const consoles: { id: ConsoleType; label: string; sub: string; icon: string; badge?: string }[] = [
     {
       id: 'wii',
+      icon: '🎮',
       label: 'Nintendo Wii',
       sub: 'Full setup: homebrew, WiiLink online, games, LetterBomb exploit on SD',
     },
     {
       id: 'wiiu',
+      icon: '📺',
       label: 'Wii U (vWii mode)',
       sub: 'Wii games via vWii — Tiramisu/Aroma CFW required. WiiLink not supported on vWii.',
       badge: 'Wii U',
     },
     {
       id: 'wiimini',
+      icon: '🕹️',
       label: 'Wii Mini',
       sub: 'No built-in WiFi. BlueBomb exploit required. Add a USB Ethernet adapter to unlock WiiLink.',
       badge: 'Limited',
@@ -43,6 +46,7 @@
         on:click={() => (selected = c.id)}
       >
         <div class="card-top">
+          <span class="card-icon">{c.icon}</span>
           <span class="card-label">{c.label}</span>
           {#if c.badge}
             <span class="badge">{c.badge}</span>
@@ -98,6 +102,7 @@
   .card.selected { border-color: #7c6fef; background: #1a1830; }
 
   .card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .card-icon { font-size: 20px; line-height: 1; }
   .card-label { font-weight: 600; font-size: 15px; }
 
   .badge {
