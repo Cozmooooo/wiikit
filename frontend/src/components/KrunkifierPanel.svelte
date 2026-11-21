@@ -16,7 +16,7 @@
   }
 
   let installing = false
-  let confirming = false   // show format-confirm overlay
+  let confirming = false
   let done = false
   let log: string[] = []
   let progress = 0
@@ -24,6 +24,9 @@
   let startTime = 0
   let elapsed = ''
   let elapsedInterval: ReturnType<typeof setInterval>
+  let reuseSD = false
+  let skipWiiLink = false
+  let sessionCount = 0
 
   // Drive auto-assignment: largest removable → USB, next → SD
   function autoAssign(drives: DriveInfo[]) {
@@ -116,17 +119,18 @@
     }, 1000)
 
     const games = filterGames(get(krunkPack))
-    await StartInstall(games, usb, sd, get(consoleType), get(ethernetEnabled))
+    await StartInstall(games, usb, sd, get(consoleType), get(ethernetEnabled), reuseSD, skipWiiLink)
   }
 
   function reset() {
+    sessionCount++
     done = false
     log = []
     errorMsg = ''
     progress = 0
     confirming = false
     krunkUsbDrive.set(null)
-    krunkSdDrive.set(null)
+    if (!reuseSD) krunkSdDrive.set(null)
     autoAssign(get(krunkDetectedDrives))
   }
 </script>
@@ -137,6 +141,9 @@
     <span class="lightning">⚡</span>
     <span class="title">KRUNKIFIER</span>
     <span class="subtitle">Mass production mode</span>
+    {#if sessionCount > 0}
+      <span class="session-badge">{sessionCount} prepped this session</span>
+    {/if}
   </div>
 
   {#if done}
@@ -144,8 +151,10 @@
     <div class="done-screen">
       <div class="done-icon">✓</div>
       <div class="done-label">KRUNK COMPLETE</div>
-      <div class="done-time">{elapsed} prep time</div>
-      <button class="btn-primary" on:click={reset}>Prep Another</button>
+      <div class="done-time">{elapsed} prep time · #{sessionCount + 1} this session</div>
+      <button class="btn-primary" on:click={reset}>
+        {reuseSD ? 'Swap USB — Prep Another' : 'Prep Another'}
+      </button>
     </div>
   {:else if installing}
     <!-- Progress screen -->
@@ -246,16 +255,26 @@
         </div>
       </section>
 
-      <!-- Ethernet toggle (Wii Mini only) -->
-      {#if $consoleType === 'wiimini'}
-        <section class="section">
-          <div class="section-label">OPTIONS</div>
+      <!-- Options -->
+      <section class="section">
+        <div class="section-label">OPTIONS</div>
+        <label class="toggle-row">
+          <input type="checkbox" bind:checked={reuseSD} />
+          <span>Reuse SD card — skip format + homebrew reinstall</span>
+          <span class="toggle-hint">saves ~5–10 min on repeat preps</span>
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" bind:checked={skipWiiLink} />
+          <span>Skip WiiLink patcher</span>
+          <span class="toggle-hint">for offline units or faster prep</span>
+        </label>
+        {#if $consoleType === 'wiimini'}
           <label class="toggle-row">
             <input type="checkbox" bind:checked={$ethernetEnabled} />
             <span>Ethernet Enabler (USB adapter required)</span>
           </label>
-        </section>
-      {/if}
+        {/if}
+      </section>
 
       {#if errorMsg}
         <div class="error-msg">{errorMsg}</div>
@@ -265,12 +284,18 @@
       {#if confirming}
         <div class="confirm-overlay">
           <div class="confirm-box">
-            <div class="confirm-title">⚠ This will ERASE both drives</div>
-            <div class="confirm-drives">
-              <div class="confirm-drive">📦 USB: <strong>{$krunkUsbDrive?.path}</strong> ({fmt($krunkUsbDrive?.sizeBytes ?? 0)})</div>
-              <div class="confirm-drive">💾 SD: <strong>{$krunkSdDrive?.path}</strong> ({fmt($krunkSdDrive?.sizeBytes ?? 0)})</div>
+            <div class="confirm-title">
+              {reuseSD ? '⚠ This will ERASE the USB drive' : '⚠ This will ERASE both drives'}
             </div>
-            <div class="confirm-hint">All existing data will be permanently deleted.</div>
+            <div class="confirm-drives">
+              <div class="confirm-drive">📦 USB: <strong>{$krunkUsbDrive?.path}</strong> ({fmt($krunkUsbDrive?.sizeBytes ?? 0)}) — will be formatted</div>
+              {#if !reuseSD}
+                <div class="confirm-drive">💾 SD: <strong>{$krunkSdDrive?.path}</strong> ({fmt($krunkSdDrive?.sizeBytes ?? 0)}) — will be formatted</div>
+              {:else}
+                <div class="confirm-drive confirm-safe">💾 SD: <strong>{$krunkSdDrive?.path}</strong> — reusing, not erased</div>
+              {/if}
+            </div>
+            <div class="confirm-hint">{reuseSD ? 'USB will be wiped. SD card is kept as-is.' : 'All existing data will be permanently deleted.'}</div>
             <div class="confirm-actions">
               <button class="confirm-cancel" on:click={() => confirming = false}>Cancel</button>
               <button class="confirm-go" on:click={confirmKrunkify}>Yes, KRUNKIFY</button>
@@ -318,6 +343,17 @@
   .lightning { font-size: 28px; }
   .title { font-size: 22px; font-weight: 800; letter-spacing: 2px; color: #f97316; }
   .subtitle { font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; }
+  .session-badge {
+    margin-left: auto;
+    padding: 3px 10px;
+    background: #0d2b1a;
+    border: 1px solid #16a34a;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #4ade80;
+    letter-spacing: 0.5px;
+  }
 
   .section { display: flex; flex-direction: column; gap: 8px; }
   .section-label {
@@ -446,6 +482,7 @@
     user-select: none;
   }
   .toggle-row input[type="checkbox"] { accent-color: #7c3aed; width: 14px; height: 14px; }
+  .toggle-hint { font-size: 11px; color: #334155; margin-left: 2px; }
 
   /* Confirm overlay */
   .confirm-overlay {
@@ -473,6 +510,7 @@
   .confirm-drive { font-size: 13px; color: #94a3b8; }
   .confirm-drive strong { color: #e2e8f0; }
   .confirm-hint { font-size: 12px; color: #64748b; }
+  .confirm-safe { color: #4ade80 !important; }
   .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 4px; }
   .confirm-cancel {
     padding: 8px 20px;

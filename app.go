@@ -74,7 +74,10 @@ const (
 	ConsoleWiiMini ConsoleType = "wiimini"
 )
 
-func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDrive drive.DriveInfo, consoleType ConsoleType, ethernetEnabled bool) error {
+// StartInstall runs the full Wii prep pipeline.
+// reuseSD: skip SD format, homebrew install, and WiiFlow config (SD already prepped).
+// skipWiiLink: skip the interactive WiiLink patcher (useful for mass production).
+func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDrive drive.DriveInfo, consoleType ConsoleType, ethernetEnabled bool, reuseSD bool, skipWiiLink bool) error {
 	go func() {
 		progress := make(chan drive.Progress, 32)
 		go func() {
@@ -93,59 +96,72 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 			return
 		}
 
-		emit("Formatting SD card...")
-		if err := drive.FormatFAT32(a.ctx, sdDrive, "WIISD"); err != nil {
-			runtime.EventsEmit(a.ctx, "error", err.Error())
-			return
-		}
+		if reuseSD {
+			emit("SD card: reusing existing setup (skipping format + homebrew reinstall).")
+			emit("Copying Wii/GCN games to USB...")
+			if err := drive.WriteGamesToUSB(a.ctx, games, usbDrive.Path, progress); err != nil {
+				runtime.EventsEmit(a.ctx, "error", err.Error())
+				return
+			}
+		} else {
+			emit("Formatting SD card...")
+			if err := drive.FormatFAT32(a.ctx, sdDrive, "WIISD"); err != nil {
+				runtime.EventsEmit(a.ctx, "error", err.Error())
+				return
+			}
 
-		emit("Copying games to USB/SD...")
-		if err := drive.WriteGames(a.ctx, games, usbDrive.Path, sdDrive.Path, progress); err != nil {
-			runtime.EventsEmit(a.ctx, "error", err.Error())
-			return
+			emit("Copying games to USB/SD...")
+			if err := drive.WriteGames(a.ctx, games, usbDrive.Path, sdDrive.Path, progress); err != nil {
+				runtime.EventsEmit(a.ctx, "error", err.Error())
+				return
+			}
+
+			emit("Loading homebrew manifest...")
+			manifest, err := homebrew.LoadManifest("manifest.json")
+			if err != nil {
+				runtime.EventsEmit(a.ctx, "error", err.Error())
+				return
+			}
+
+			emit("Downloading and installing homebrew stack...")
+			if err := homebrew.InstallStack(a.ctx, manifest, sdDrive.Path, string(consoleType), progress); err != nil {
+				runtime.EventsEmit(a.ctx, "error", err.Error())
+				return
+			}
+
+			emit("Writing WiiFlow plugin configs...")
+			if err := wiiflow.WritePlugins(sdDrive.Path); err != nil {
+				emit("Warning: wiiflow plugins: " + err.Error())
+			}
+
+			// Splash screen + Priiloader (Wii only)
+			if consoleType == ConsoleWii {
+				emit("Downloading Krunk splash screen...")
+				if err := homebrew.WriteSplashDOL(a.ctx, sdDrive.Path, emit); err != nil {
+					emit("Warning: splash screen skipped: " + err.Error())
+				}
+				emit("Writing Priiloader auto-boot config...")
+				if err := homebrew.WritePriiloaderConfig(sdDrive.Path); err != nil {
+					emit("Warning: could not write priiloader.cfg: " + err.Error())
+				}
+			}
 		}
 
 		if err := drive.WriteReadme(usbDrive.Path); err != nil {
 			emit("Warning: could not write HOW_TO_ADD_GAMES.txt: " + err.Error())
 		}
 
-		emit("Loading homebrew manifest...")
-		manifest, err := homebrew.LoadManifest("manifest.json")
-		if err != nil {
-			runtime.EventsEmit(a.ctx, "error", err.Error())
-			return
-		}
-
-		emit("Downloading and installing homebrew stack...")
-		if err := homebrew.InstallStack(a.ctx, manifest, sdDrive.Path, string(consoleType), progress); err != nil {
-			runtime.EventsEmit(a.ctx, "error", err.Error())
-			return
-		}
-
-		emit("Writing WiiFlow plugin configs...")
-		if err := wiiflow.WritePlugins(sdDrive.Path); err != nil {
-			emit("Warning: wiiflow plugins: " + err.Error())
-		}
-
-		// Splash screen + Priiloader (Wii only)
-		if consoleType == ConsoleWii {
-			emit("Downloading Krunk splash screen...")
-			if err := homebrew.WriteSplashDOL(a.ctx, sdDrive.Path, emit); err != nil {
-				emit("Warning: splash screen skipped: " + err.Error())
-			}
-			emit("Writing Priiloader auto-boot config...")
-			if err := homebrew.WritePriiloaderConfig(sdDrive.Path); err != nil {
-				emit("Warning: could not write priiloader.cfg: " + err.Error())
-			}
-		}
-
-		// WiiLink: base Wii always, Wii Mini only when ethernet adapter is connected
-		if consoleType == ConsoleWii || (consoleType == ConsoleWiiMini && ethernetEnabled) {
+		// WiiLink: skip when reuseSD (already patched) or skipWiiLink flag set
+		wiiLinkNeeded := !skipWiiLink && !reuseSD &&
+			(consoleType == ConsoleWii || (consoleType == ConsoleWiiMini && ethernetEnabled))
+		if wiiLinkNeeded {
 			emit("Running WiiLink patcher...")
 			if err := wiilink.RunPatcher(a.ctx, sdDrive.Path, nil); err != nil {
 				runtime.EventsEmit(a.ctx, "error", err.Error())
 				return
 			}
+		} else if skipWiiLink {
+			emit("WiiLink: skipped.")
 		} else {
 			emit("Skipping WiiLink (not supported on " + string(consoleType) + ").")
 		}
