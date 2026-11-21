@@ -12,7 +12,7 @@ import (
 	"wiikit/internal/drive"
 )
 
-func InstallStack(ctx context.Context, manifest *Manifest, sdRoot string, progress chan<- drive.Progress) error {
+func InstallStack(ctx context.Context, manifest *Manifest, sdRoot string, consoleType string, progress chan<- drive.Progress) error {
 	cacheDir, err := os.MkdirTemp("", "wiikit-cache-*")
 	if err != nil {
 		return fmt.Errorf("create cache dir: %w", err)
@@ -20,6 +20,15 @@ func InstallStack(ctx context.Context, manifest *Manifest, sdRoot string, progre
 	defer os.RemoveAll(cacheDir)
 
 	for _, asset := range manifest.Assets {
+		// tool and pending assets are handled outside InstallStack
+		if asset.Group == "tool" || asset.Group == "pending" {
+			continue
+		}
+		// console-specific assets are skipped when console type doesn't match
+		if len(asset.Consoles) > 0 && !containsString(asset.Consoles, consoleType) {
+			continue
+		}
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -54,6 +63,15 @@ func InstallStack(ctx context.Context, manifest *Manifest, sdRoot string, progre
 		}
 	}
 	return nil
+}
+
+func containsString(slice []string, s string) bool {
+	for _, v := range slice {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
 
 func resolveDestPath(destPath, sdRoot string) string {

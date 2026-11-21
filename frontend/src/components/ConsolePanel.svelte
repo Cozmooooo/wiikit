@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { step, consoleType, type ConsoleType } from '../stores/state'
+  import { step, consoleType, ethernetEnabled, type ConsoleType } from '../stores/state'
 
   const consoles: { id: ConsoleType; label: string; sub: string; badge?: string }[] = [
     {
@@ -16,15 +16,17 @@
     {
       id: 'wiimini',
       label: 'Wii Mini',
-      sub: 'USB-only, no WiFi/LAN. WiiLink skipped. BlueBomb exploit required (separate hardware).',
+      sub: 'No built-in WiFi. BlueBomb exploit required. Add a USB Ethernet adapter to unlock WiiLink.',
       badge: 'Limited',
     },
   ]
 
   let selected: ConsoleType = $consoleType
+  let ethChecked = $ethernetEnabled
 
   function next() {
     consoleType.set(selected)
+    ethernetEnabled.set(selected === 'wiimini' && ethChecked)
     step.set(1)
   }
 </script>
@@ -50,6 +52,26 @@
       </button>
     {/each}
   </div>
+
+  {#if selected === 'wiimini'}
+    <div class="eth-box">
+      <label class="eth-row">
+        <input type="checkbox" bind:checked={ethChecked} />
+        <span>
+          <strong>I have a USB Ethernet adapter</strong> (ASIX AX88179 recommended — ~$8)
+        </span>
+      </label>
+      {#if ethChecked}
+        <p class="eth-note">
+          WiiKit will install <strong>Ethernet Enabler</strong> on your SD card.
+          Run it once from the Homebrew Channel to permanently enable USB internet on your Wii Mini.
+          WiiLink online channels will then be set up automatically.
+        </p>
+      {:else}
+        <p class="eth-note muted">Without an adapter, WiiLink online channels are unavailable on Wii Mini.</p>
+      {/if}
+    </div>
+  {/if}
 
   <div class="footer">
     <button class="primary big" on:click={next}>Next →</button>
@@ -93,6 +115,16 @@
   }
   button.primary { background: #7c6fef; border-color: #7c6fef; font-weight: 600; }
   button.big { padding: 12px 32px; font-size: 15px; }
+
+  .eth-box {
+    background: #0d1a0d; border: 1px solid #1a3a1a; border-radius: 8px;
+    padding: 14px 16px; margin-bottom: 80px;
+  }
+  .eth-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px; }
+  .eth-row input { margin-top: 2px; flex-shrink: 0; }
+  .eth-row strong { color: #7fff7f; }
+  .eth-note { margin: 10px 0 0; font-size: 12px; color: #9f9; line-height: 1.5; }
+  .eth-note.muted { color: #666; }
 
   .footer {
     position: fixed; bottom: 0; left: 0; right: 0;

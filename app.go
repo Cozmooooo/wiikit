@@ -63,7 +63,7 @@ const (
 	ConsoleWiiMini ConsoleType = "wiimini"
 )
 
-func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDrive drive.DriveInfo, consoleType ConsoleType) error {
+func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDrive drive.DriveInfo, consoleType ConsoleType, ethernetEnabled bool) error {
 	go func() {
 		progress := make(chan drive.Progress, 32)
 		go func() {
@@ -102,7 +102,7 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 		}
 
 		emit("Downloading and installing homebrew stack...")
-		if err := homebrew.InstallStack(a.ctx, manifest, sdDrive.Path, progress); err != nil {
+		if err := homebrew.InstallStack(a.ctx, manifest, sdDrive.Path, string(consoleType), progress); err != nil {
 			runtime.EventsEmit(a.ctx, "error", err.Error())
 			return
 		}
@@ -119,8 +119,8 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 			}
 		}
 
-		// WiiLink online services — only on base Wii (not supported on vWii or Wii Mini)
-		if consoleType == ConsoleWii {
+		// WiiLink: base Wii always, Wii Mini only when ethernet adapter is connected
+		if consoleType == ConsoleWii || (consoleType == ConsoleWiiMini && ethernetEnabled) {
 			emit("Running WiiLink patcher...")
 			if err := wiilink.RunPatcher(a.ctx, sdDrive.Path, nil); err != nil {
 				runtime.EventsEmit(a.ctx, "error", err.Error())
@@ -139,9 +139,15 @@ func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDri
 			emit("Wii U note: install Tiramisu or Aroma CFW first, then access vWii.")
 			emit("  Games load via USBLoader GX in vWii mode. WiiLink is not available on vWii.")
 		case ConsoleWiiMini:
-			emit("Wii Mini note: no WiFi — LetterBomb won't work.")
+			emit("Wii Mini note: no built-in WiFi — LetterBomb won't work.")
 			emit("  Use BlueBomb (requires a Bluetooth-capable Linux device nearby).")
 			emit("  See: github.com/Fullmetal5/bluebomb for setup instructions.")
+			if ethernetEnabled {
+				emit("Ethernet Enabler is on your SD card (apps/Wii Mini Ethernet Enable/).")
+				emit("  Run it from HBC once — it makes a one-time NAND change to enable USB Ethernet.")
+				emit("  Recommended adapter: ASIX AX88179 USB Ethernet (≤$8 on Amazon).")
+				emit("  After running it, plug in your USB adapter and WiiLink will be available.")
+			}
 		}
 
 		emit("Done! Eject your drives and power on the console.")

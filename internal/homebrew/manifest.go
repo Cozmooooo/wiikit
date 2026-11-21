@@ -11,11 +11,13 @@ import (
 var sha256Re = regexp.MustCompile(`^[0-9a-fA-F]{64}$`)
 
 type Asset struct {
-	Name     string `json:"name"`
-	Version  string `json:"version"`
-	URL      string `json:"url"`
-	SHA256   string `json:"sha256"`
-	DestPath string `json:"dest"`
+	Name     string   `json:"name"`
+	Version  string   `json:"version"`
+	URL      string   `json:"url"`
+	SHA256   string   `json:"sha256"`
+	DestPath string   `json:"dest"`
+	Group    string   `json:"group,omitempty"`    // "tool" = external launcher, "pending" = sha256 TBD
+	Consoles []string `json:"consoles,omitempty"` // non-empty = only install for these console types
 }
 
 type Manifest struct {
@@ -41,11 +43,17 @@ func LoadManifest(path string) (*Manifest, error) {
 		if strings.TrimSpace(a.URL) == "" {
 			return nil, fmt.Errorf("asset %q: empty URL", a.Name)
 		}
-		if !sha256Re.MatchString(a.SHA256) {
-			return nil, fmt.Errorf("asset %q: invalid sha256 %q (must be 64 hex chars)", a.Name, a.SHA256)
+		// "pending" = sha256 not yet published (e.g. unreleased splash dol)
+		if a.Group != "pending" {
+			if !sha256Re.MatchString(a.SHA256) {
+				return nil, fmt.Errorf("asset %q: invalid sha256 %q (must be 64 hex chars)", a.Name, a.SHA256)
+			}
 		}
-		if strings.TrimSpace(a.DestPath) == "" {
-			return nil, fmt.Errorf("asset %q: empty dest path", a.Name)
+		// "tool" and "pending" have no SD dest — they're handled outside InstallStack
+		if a.Group != "tool" && a.Group != "pending" {
+			if strings.TrimSpace(a.DestPath) == "" {
+				return nil, fmt.Errorf("asset %q: empty dest path", a.Name)
+			}
 		}
 	}
 

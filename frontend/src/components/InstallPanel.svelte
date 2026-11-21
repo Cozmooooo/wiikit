@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { library, usbDrive, sdDrive, installing, log, step, wiilinkConfirmed, consoleType } from '../stores/state'
+  import { library, usbDrive, sdDrive, installing, log, progress, step, wiilinkConfirmed, consoleType, ethernetEnabled } from '../stores/state'
 
   let done = false
   let errorMsg = ''
@@ -21,6 +21,9 @@
     window.runtime?.EventsOn('log', (msg: unknown) => {
       log.update(l => [...l, String(msg)])
     })
+    window.runtime?.EventsOn('progress', (p: unknown) => {
+      progress.set(p as typeof $progress)
+    })
     window.runtime?.EventsOn('error', (msg: unknown) => {
       errorMsg = String(msg)
       installing.set(false)
@@ -31,7 +34,7 @@
     })
 
     try {
-      await window.go.main.App.StartInstall(selectedGames, usb, sd, $consoleType)
+      await window.go.main.App.StartInstall(selectedGames, usb, sd, $consoleType, $ethernetEnabled)
     } catch (e: unknown) {
       errorMsg = e instanceof Error ? e.message : String(e)
       installing.set(false)
@@ -92,13 +95,36 @@
         <p>WiiLink is not supported on vWii. All other homebrew will install normally.</p>
         <p>Requires <strong>Tiramisu or Aroma CFW</strong> already installed on your Wii U before proceeding.</p>
       </div>
+    {:else if $consoleType === 'wiimini' && $ethernetEnabled}
+      <div class="console-note mini eth">
+        <strong>Wii Mini + Ethernet</strong>
+        <p>WiiKit will install <strong>Ethernet Enabler</strong> on your SD card and run the <strong>WiiLink Patcher</strong>.</p>
+        <p>After setup: plug in your ASIX AX88179 USB adapter, then run Ethernet Enabler from the Homebrew Channel once to activate it.</p>
+        <p>BlueBomb exploit required to install homebrew on a stock Wii Mini.</p>
+        <label class="confirm-row">
+          <input type="checkbox" bind:checked={wiilinkOk} />
+          I'll complete the WiiLink Patcher window when it opens
+        </label>
+      </div>
     {:else if $consoleType === 'wiimini'}
       <div class="console-note mini">
         <strong>Wii Mini</strong>
-        <p>No WiFi — WiiLink is skipped. Games load from USB only.</p>
+        <p>No built-in WiFi — WiiLink is skipped. Games load from USB only.</p>
         <p>To install homebrew on a stock Wii Mini, use <strong>BlueBomb</strong> (requires a Bluetooth-capable Linux device nearby). Instructions will appear in the log after setup completes.</p>
       </div>
     {/if}
+  {/if}
+
+  {#if $installing && $progress.stage}
+    <div class="progress-bar-wrap">
+      <div class="progress-stage">{$progress.stage}</div>
+      {#if $progress.bytesTotal && $progress.bytesTotal > 0}
+        <div class="progress-track">
+          <div class="progress-fill" style="width: {Math.round(($progress.bytesDone ?? 0) / $progress.bytesTotal * 100)}%"></div>
+        </div>
+        <div class="progress-pct">{Math.round(($progress.bytesDone ?? 0) / $progress.bytesTotal * 100)}%</div>
+      {/if}
+    </div>
   {/if}
 
   {#if $log.length > 0}
@@ -126,7 +152,7 @@
       <button class="ghost" on:click={back}>← Back</button>
       <button
         class="primary big"
-        disabled={($consoleType === 'wii' && !wiilinkOk) || $installing}
+        disabled={(($consoleType === 'wii' || ($consoleType === 'wiimini' && $ethernetEnabled)) && !wiilinkOk) || $installing}
         on:click={startInstall}
       >
         {$installing ? 'Installing…' : '🚀 Start Install'}
@@ -152,10 +178,23 @@
   }
   .console-note.wiiu { background: #0d1a2e; border: 1px solid #1a3a5e; }
   .console-note.mini { background: #1a0d00; border: 1px solid #3a1a00; }
+  .console-note.mini.eth { background: #0d1a0d; border: 1px solid #1a3a1a; }
   .console-note strong { display: block; margin-bottom: 8px; }
   .console-note.wiiu strong { color: #7cb8ff; }
   .console-note.mini strong { color: #f0a000; }
+  .console-note.mini.eth strong { color: #7fff7f; }
   .console-note p { color: #aaa; font-size: 13px; line-height: 1.5; margin-bottom: 6px; }
+
+  .progress-bar-wrap {
+    background: #0a0a0f; border: 1px solid #1e1e2e; border-radius: 6px;
+    padding: 12px 16px; margin-bottom: 16px;
+  }
+  .progress-stage { font-size: 12px; color: #9f9; margin-bottom: 8px; font-family: monospace; }
+  .progress-track {
+    height: 6px; background: #1e1e2e; border-radius: 3px; overflow: hidden; margin-bottom: 4px;
+  }
+  .progress-fill { height: 100%; background: #7c6fef; border-radius: 3px; transition: width 0.2s; }
+  .progress-pct { font-size: 11px; color: #666; text-align: right; }
 
   .wiilink-disclosure {
     background: #0d1a2e; border: 1px solid #1a3a5e; border-radius: 8px;

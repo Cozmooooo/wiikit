@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import QRCode from 'qrcode'
-  import { library, consoleType } from '../stores/state'
+  import { library, consoleType, ethernetEnabled } from '../stores/state'
 
   let wiiLinkQR = ''
   let blueBombQR = ''
@@ -19,9 +19,10 @@
   })
 
   $: games = $library.filter(g => g.selected)
-  $: isWii     = $consoleType === 'wii'
-  $: isWiiU    = $consoleType === 'wiiu'
-  $: isWiiMini = $consoleType === 'wiimini'
+  $: isWii        = $consoleType === 'wii'
+  $: isWiiU       = $consoleType === 'wiiu'
+  $: isWiiMini    = $consoleType === 'wiimini'
+  $: isWiiMiniEth = $consoleType === 'wiimini' && $ethernetEnabled
 
   function print() {
     printing = true
@@ -61,8 +62,11 @@
             <li>Snes9xGX — SNES emulator</li>
             <li>FCEUltraGX — NES emulator</li>
             <li>Visual Boy Advance GX — GBA emulator</li>
-            {#if isWii}
+            {#if isWii || isWiiMiniEth}
               <li>WiiLink — restored online channels</li>
+            {/if}
+            {#if isWiiMiniEth}
+              <li>Ethernet Enabler — USB internet on Wii Mini</li>
             {/if}
           </ul>
         </section>
@@ -117,6 +121,25 @@
               <li>Launch vWii from Wii U Menu</li>
               <li>Open Homebrew Channel → USBLoader GX</li>
               <li>Note: WiiLink not available in vWii mode</li>
+            </ol>
+          </section>
+        {:else if isWiiMiniEth}
+          <section class="qr-section">
+            <img src={wiiLinkQR} alt="WiiLink QR" class="qr" />
+            <div class="qr-label">
+              <strong>Activate WiiLink Online</strong>
+              <span>Scan to follow the guide — restores<br>online channels via USB Ethernet.</span>
+            </div>
+          </section>
+          <section>
+            <h3>Quick Start</h3>
+            <ol>
+              <li>Plug in USB drive (only USB port)</li>
+              <li>Power on → Homebrew Channel</li>
+              <li>Run <strong>Ethernet Enabler</strong> once (makes NAND change)</li>
+              <li>Plug in USB Ethernet adapter (ASIX AX88179)</li>
+              <li>Launch USBLoader GX to play games</li>
+              <li>Scan QR code above to activate online channels</li>
             </ol>
           </section>
         {:else if isWiiMini}

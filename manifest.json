@@ -65,53 +65,68 @@
       "dest": "sd://apps/priiloader/"
     },
     {
+      "name": "ethernet-enabler",
+      "version": "2026-04",
+      "url": "https://wiibrew.org/w/images/f/f9/Wii_Mini_Ethernet_Enable.zip",
+      "sha256": "25aaf2bfa05ae55acec46981b2e21119bf3107bc35c14d61902dc376fdc9972b",
+      "dest": "sd://apps/Wii Mini Ethernet Enable/",
+      "consoles": ["wiimini"],
+      "_note": "Ethernet Enabler by Fullmetal5. Makes a one-time NAND change enabling ASIX AX88179 USB adapters on Wii Mini. Run once from HBC after install. SHA256 computed 2026-11-20 from wiibrew.org/w/images/f/f9/Wii_Mini_Ethernet_Enable.zip."
+    },
+    {
       "name": "krunk-splash",
       "version": "1.0.0",
       "url": "https://github.com/Cozmooooo/wiikit-splash/releases/download/v1.0.0/krunk-splash.dol",
       "sha256": "",
-      "dest": "sd://",
-      "_note": "Krunk splash screen boot.dol — placed at SD root so Priiloader launches it on power-on, then it chain-loads USBLoader GX. SHA256 left empty until first release is published at github.com/Cozmooooo/wiikit-splash."
+      "dest": "sd://boot.dol",
+      "group": "pending",
+      "_note": "Krunk splash screen boot.dol — handled by splash.go, not InstallStack. SHA256 left empty until first release is published at github.com/Cozmooooo/wiikit-splash."
     },
     {
       "name": "hackmii-installer",
       "version": "1.2",
       "url": "https://bootmii.org/hackmii_installer_v1.2.zip",
       "sha256": "32b7406956860ffb50d46f83e5fb6b8d67cd2612781cd97619d0c2371c84c945",
-      "dest": "sd://",
-      "_note": "HackMii Installer v1.2 — boot.dol placed at SD root. User runs LetterBomb (MAC-specific, generated at please.hackmii.com) which launches this installer to install HBC + BootMii. SHA256 left empty; will be pinned after first verified download."
+      "dest": "sd://boot.dol",
+      "_note": "HackMii Installer v1.2 — boot.dol placed at SD root. User runs LetterBomb (MAC-specific, generated at please.hackmii.com) which launches this installer to install HBC + BootMii."
     },
     {
       "name": "wiilink-patcher-windows",
       "version": "v1.5.3",
       "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-Windows-onefile-x64.exe",
       "sha256": "37d685b02f5bb06904043a21d25687401f751d665864ff4537baebe7b1a669bc",
-      "dest": ""
+      "dest": "",
+      "group": "tool"
     },
     {
       "name": "wiilink-patcher-macos",
       "version": "v1.5.3",
       "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-macOS-arm64.tar.gz",
       "sha256": "d560a2e0bdef37764da6b957e8d811a73ee6b7bbf2fb237d5d3177ae9546558d",
-      "dest": ""
+      "dest": "",
+      "group": "tool"
     },
     {
       "name": "wiilink-patcher-macos-x64",
       "version": "v1.5.3",
       "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-macOS-x64.tar.gz",
       "sha256": "751f431f2b62b77e3ac9eb75220fb079007de7c57c082b76fa09344337fdedca",
-      "dest": ""
+      "dest": "",
+      "group": "tool"
     },
     {
       "name": "wiilink-patcher-linux",
       "version": "v1.5.3",
       "url": "https://github.com/WiiLink24/WiiLink-Patcher-GUI/releases/download/v1.5.3/WiiLinkPatcherGUI-Linux-x64.tar.gz",
       "sha256": "76f8469df7524fc0a1b59f8be39003a4839fc2500f353fcc4de34b45ac3d6cd3",
-      "dest": ""
+      "dest": "",
+      "group": "tool"
     }
   ],
   "_notes": {
     "nintendont": "Sourced from Open Shop Channel (oscwii.org) — the standard Wii homebrew distribution channel. The zip contains apps/Nintendont/boot.dol which is extracted to sd://apps/Nintendont/. SHA-256 verified 2026-11-19.",
     "wiilink-patcher": "WiiLink Patcher is now a GUI app (WiiLink24/WiiLink-Patcher-GUI v1.5.3). It does NOT support --unattended flags. WiiKit downloads, verifies, and launches it; the user completes the interactive setup. The SD root is pre-populated so they only need to confirm paths in the GUI.",
-    "wiilink-patcher-macos": "arm64 (Apple Silicon). An x64 build also exists at WiiLinkPatcherGUI-macOS-x64.tar.gz if needed for Intel Macs."
+    "wiilink-patcher-macos": "arm64 (Apple Silicon). An x64 build also exists at WiiLinkPatcherGUI-macOS-x64.tar.gz if needed for Intel Macs.",
+    "ethernet-enabler": "Only installed for wiimini console type. The ZIP extracts to sd://apps/Wii Mini Ethernet Enable/ — user runs it once from HBC to permanently enable USB Ethernet."
   }
 }
