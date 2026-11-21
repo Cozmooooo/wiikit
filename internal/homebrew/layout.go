@@ -48,15 +48,20 @@ func InstallStack(ctx context.Context, manifest *Manifest, sdRoot string, consol
 		}
 
 		destPath := resolveDestPath(asset.DestPath, sdRoot)
-		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
-			return fmt.Errorf("mkdir for %s: %w", asset.Name, err)
-		}
 
 		if strings.HasSuffix(strings.ToLower(localPath), ".zip") {
-			if err := extractZip(localPath, filepath.Dir(destPath)); err != nil {
+			// For ZIPs, dest is the extraction root directory (not a file path).
+			// MkdirAll the dest itself; extractZip creates subdirs from the archive.
+			if err := os.MkdirAll(destPath, 0755); err != nil {
+				return fmt.Errorf("mkdir for %s: %w", asset.Name, err)
+			}
+			if err := extractZip(localPath, destPath); err != nil {
 				return fmt.Errorf("extract %s: %w", asset.Name, err)
 			}
 		} else {
+			if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+				return fmt.Errorf("mkdir for %s: %w", asset.Name, err)
+			}
 			if err := copyFile(localPath, destPath); err != nil {
 				return fmt.Errorf("install %s: %w", asset.Name, err)
 			}

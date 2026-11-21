@@ -6,70 +6,70 @@
       "version": "5.6.2",
       "url": "https://github.com/Fledge68/WiiFlow_Lite/releases/download/v5.6.2/wiiflow_v5.6.2.zip",
       "sha256": "7892203f54e91a4ceeed70df9f3c1bdb3a8e2ec204e894d71953bd6a0ded0185",
-      "dest": "sd://apps/wiiflow/"
+      "dest": "sd://"
     },
     {
       "name": "usbloadergx",
       "version": "r1283",
       "url": "https://github.com/wiidev/usbloadergx/releases/download/v4.0-r1283/usbloadergx_r1283.zip",
       "sha256": "83e3fa9e18fd715c9617125d674b4b965eddff2ee8c54f11394c0bbc04a421a2",
-      "dest": "sd://apps/usbloadergx/"
+      "dest": "sd://"
     },
     {
       "name": "not64",
       "version": "20260410",
       "url": "https://github.com/extremscorner/not64/releases/download/20260410/mupen64-20260410.zip",
       "sha256": "168f32b9fd659cae1bdca218afc6fdb4050fb73737c0e05954d3c1c757e68560",
-      "dest": "sd://apps/not64/"
+      "dest": "sd://"
     },
     {
       "name": "wiistation",
       "version": "3.2",
       "url": "https://github.com/xjsxjs197/WiiSXRX_2022/releases/download/WiiStation_Ver3.2/WiiStation_Ver3.2.zip",
       "sha256": "9a492297721ca1156796b908ba9a0f996926bd1fc32b88bb5a5aa0c54a6c7a7c",
-      "dest": "sd://apps/wiistation/"
+      "dest": "sd://"
     },
     {
       "name": "snes9xgx",
       "version": "5.0.6",
       "url": "https://github.com/dborth/snes9xgx/releases/download/5.0.6/Snes9xGX-5.0.6-Wii.zip",
       "sha256": "37e869691c23ef91f3238f174f594c175d42db6c14e88a11dc90dcd4e275668b",
-      "dest": "sd://apps/snes9xgx/"
+      "dest": "sd://"
     },
     {
       "name": "fceugx",
       "version": "4.0.5",
       "url": "https://github.com/dborth/fceugx/releases/download/4.0.5/FCEUltraGX-4.0.5-Wii.zip",
       "sha256": "8a1d18d4cac6366b52ce4145c9e34c9b81617632f20afd1f2c91b4abbe58398a",
-      "dest": "sd://apps/fceugx/"
+      "dest": "sd://"
     },
     {
       "name": "vbagx",
       "version": "3.0.6",
       "url": "https://github.com/dborth/vbagx/releases/download/3.0.6/VisualBoyAdvanceGX-3.0.6-Wii.zip",
       "sha256": "3fa544c75545f42e3a9e2bb884330d59e4ba04bab6df6f0ec3f543298223c729",
-      "dest": "sd://apps/vbagx/"
+      "dest": "sd://"
     },
     {
       "name": "nintendont",
       "version": "oscwii-2026",
       "url": "https://hbb1.oscwii.org/hbb/nintendont/nintendont.zip",
       "sha256": "2531767f8e69e6b909a275a2204e0e056ee06b2150f5481c19a66ed93fda9f36",
-      "dest": "sd://apps/Nintendont/"
+      "dest": "sd://"
     },
     {
       "name": "priiloader",
       "version": "0.10.0",
       "url": "https://github.com/DacoTaco/priiloader/releases/download/0.10.0/Priiloader_v0_10.zip",
       "sha256": "312881836bc62ae55d496a9caef987d19493f635e26079bc60ecde08a2a31c1d",
-      "dest": "sd://apps/priiloader/"
+      "dest": "sd://"
     },
     {
       "name": "ethernet-enabler",
       "version": "2026-04",
       "url": "https://wiibrew.org/w/images/f/f9/Wii_Mini_Ethernet_Enable.zip",
       "sha256": "25aaf2bfa05ae55acec46981b2e21119bf3107bc35c14d61902dc376fdc9972b",
-      "dest": "sd://apps/Wii Mini Ethernet Enable/",
+      "dest": "sd://apps/",
       "consoles": ["wiimini"],
       "_note": "Ethernet Enabler by Fullmetal5. Makes a one-time NAND change enabling ASIX AX88179 USB adapters on Wii Mini. Run once from HBC after install. SHA256 computed 2026-11-20 from wiibrew.org/w/images/f/f9/Wii_Mini_Ethernet_Enable.zip."
     },
