@@ -80,9 +80,31 @@ const (
 func (a *App) StartInstall(games []library.Game, usbDrive drive.DriveInfo, sdDrive drive.DriveInfo, consoleType ConsoleType, ethernetEnabled bool, reuseSD bool, skipWiiLink bool) error {
 	go func() {
 		progress := make(chan drive.Progress, 32)
+
+		// Compute total bytes that will be copied so we can emit cumulative progress.
+		var totalBytes int64
+		for _, g := range games {
+			if reuseSD && !g.GoesOnUSB() {
+				continue // SD not being written in reuseSD mode
+			}
+			totalBytes += g.SizeBytes
+		}
+
+		// Fan-in: accumulate per-game deltas into one smooth overall percentage.
 		go func() {
+			lastSeen := make(map[string]int64)
+			var cumBytes int64
 			for p := range progress {
-				runtime.EventsEmit(a.ctx, "progress", p)
+				delta := p.BytesDone - lastSeen[p.GameID]
+				if delta > 0 {
+					cumBytes += delta
+					lastSeen[p.GameID] = p.BytesDone
+				}
+				runtime.EventsEmit(a.ctx, "progress", drive.Progress{
+					Stage:      p.Title,
+					BytesDone:  cumBytes,
+					BytesTotal: totalBytes,
+				})
 			}
 		}()
 

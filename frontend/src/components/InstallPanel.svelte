@@ -164,7 +164,7 @@
     <div class="progress-bar-wrap">
       <div class="progress-header">
         {#if $progress.stage}
-          <span class="progress-stage">{$progress.stage}</span>
+          <span class="progress-stage">Copying: {$progress.stage}</span>
         {:else}
           <span class="progress-stage">Working…</span>
         {/if}
